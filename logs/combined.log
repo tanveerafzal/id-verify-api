@@ -1,0 +1,63 @@
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 16:35:10"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 16:35:10"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 16:44:39"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 16:44:39"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 16:51:46"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 16:51:46"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 16:51:59"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 16:51:59"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 16:52:11"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 16:52:11"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 16:52:18"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 16:52:18"}
+{"level":"info","message":"Successful login for username: admin","timestamp":"2025-12-01 18:54:39"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 19:25:15"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 19:25:15"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 19:26:02"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 19:26:02"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 19:26:27"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 19:26:27"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 19:27:02"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 19:27:02"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 19:27:25"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 19:27:25"}
+{"level":"info","message":"New user registered: newuser","timestamp":"2025-12-01 19:30:27"}
+{"level":"error","message":"Registration error: Username already exists","stack":"Error: Username already exists\n    at AuthService.register (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\auth.service.ts:30:15)\n    at AuthController.register (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\auth.controller.ts:53:20)","timestamp":"2025-12-01 19:30:33"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 19:39:56"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 19:39:56"}
+{"level":"error","message":"Unhandled error: File too large","method":"POST","path":"/api/v1/verifications/4fee7577-e697-4c0e-9479-001c3840e1c3/documents","stack":"MulterError: File too large\n    at abortWithCode (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\multer\\lib\\make-middleware.js:73:22)\n    at FileStream.<anonymous> (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\multer\\lib\\make-middleware.js:136:11)\n    at FileStream.emit (node:events:518:28)\n    at SBMH.ssCb [as _cb] (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\busboy\\lib\\types\\multipart.js:479:32)\n    at feed (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\streamsearch\\lib\\sbmh.js:248:10)\n    at SBMH.push (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\streamsearch\\lib\\sbmh.js:104:16)\n    at Multipart._write (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\busboy\\lib\\types\\multipart.js:567:19)\n    at writeOrBuffer (node:internal/streams/writable:564:12)\n    at _write (node:internal/streams/writable:493:10)\n    at Writable.write (node:internal/streams/writable:502:10)","timestamp":"2025-12-01 19:46:54"}
+{"level":"error","message":"Unhandled error: File too large","method":"POST","path":"/api/v1/verifications/bcfc1a52-6866-4209-8d29-e704b2817701/documents","stack":"MulterError: File too large\n    at abortWithCode (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\multer\\lib\\make-middleware.js:73:22)\n    at FileStream.<anonymous> (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\multer\\lib\\make-middleware.js:136:11)\n    at FileStream.emit (node:events:518:28)\n    at SBMH.ssCb [as _cb] (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\busboy\\lib\\types\\multipart.js:479:32)\n    at feed (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\streamsearch\\lib\\sbmh.js:248:10)\n    at SBMH.push (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\streamsearch\\lib\\sbmh.js:104:16)\n    at Multipart._write (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\busboy\\lib\\types\\multipart.js:567:19)\n    at writeOrBuffer (node:internal/streams/writable:564:12)\n    at _write (node:internal/streams/writable:493:10)\n    at Writable.write (node:internal/streams/writable:502:10)","timestamp":"2025-12-01 19:51:01"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:02:26"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:02:26"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:05:14"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:05:14"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:08:17"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:08:17"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:15:35"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:15:35"}
+{"level":"info","message":"New partner registered: tanveerafzal@gmail.com","timestamp":"2025-12-01 20:15:46"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com upgraded to professional","timestamp":"2025-12-01 20:16:16"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com upgraded to enterprise","timestamp":"2025-12-01 20:16:26"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:22:35"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:22:35"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:23:02"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:23:02"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:23:37"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:23:37"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:23:39"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:23:39"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:27:52"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:27:52"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:33:07"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:33:07"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:33:30"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:33:30"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 20:33:45"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 20:33:45"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-01 20:40:52"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 22:23:18"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 22:23:18"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 22:32:38"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 22:32:38"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 22:33:08"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-01 22:33:08"}

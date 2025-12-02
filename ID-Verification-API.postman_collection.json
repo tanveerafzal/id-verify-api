@@ -1,0 +1,623 @@
+{
+  "info": {
+    "name": "ID Verification API",
+    "description": "Complete API collection for ID verification service with JWT authentication and user registration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.1.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3002",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verificationId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"USER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Register a new user account.\n\n**Required Fields:**\n- username (min 3 characters)\n- password (min 6 characters)\n\n**Optional Fields:**\n- email (must be valid email format)\n- role (ADMIN, USER, or API_CLIENT - defaults to USER)\n\n**Validation:**\n- Username must be unique\n- Email must be unique (if provided)\n- Password must be at least 6 characters"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"USER\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"user\": {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"username\": \"newuser\",\n      \"email\": \"newuser@example.com\",\n      \"role\": \"USER\"\n    }\n  },\n  \"message\": \"User registered successfully\"\n}"
+            },
+            {
+              "name": "Username Already Exists",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"existinguser\",\n  \"password\": \"password123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Username already exists\"\n}"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"ab\",\n  \"password\": \"123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Username must be at least 3 characters long\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save auth token for subsequent requests",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.data.token);",
+                  "    console.log('Auth token saved successfully');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Login to get JWT authentication token.\n\n**Note:** You must first register a user using the Register endpoint, or use an existing user account.\n\nThe token will be automatically saved and used for all subsequent requests."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"expiresIn\": \"24h\",\n    \"tokenType\": \"Bearer\"\n  }\n}"
+            },
+            {
+              "name": "Invalid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"wrong\",\n  \"password\": \"wrong\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"Invalid username or password\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Authentication endpoints for obtaining JWT tokens"
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the API server is running and healthy. No authentication required."
+      },
+      "response": []
+    },
+    {
+      "name": "Verifications",
+      "item": [
+        {
+          "name": "1. Create Verification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save verification ID for subsequent requests",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('verificationId', response.data.id);",
+                  "    console.log('Verification ID saved:', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user_12345\",\n  \"type\": \"FULL_KYC\",\n  \"webhookUrl\": \"https://your-webhook-url.com/webhook\",\n  \"metadata\": {\n    \"source\": \"mobile_app\",\n    \"appVersion\": \"1.0.0\",\n    \"deviceId\": \"device_xyz\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications"]
+            },
+            "description": "Create a new verification session. Types: IDENTITY, DOCUMENT_ONLY, SELFIE_ONLY, FULL_KYC\n\n**Requires authentication token.**"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"user_12345\",\n  \"type\": \"FULL_KYC\",\n  \"metadata\": {\n    \"source\": \"mobile_app\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/verifications",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "verifications"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"userId\": \"user_12345\",\n    \"status\": \"PENDING\",\n    \"type\": \"FULL_KYC\",\n    \"createdAt\": \"2025-12-01T00:00:00.000Z\",\n    \"updatedAt\": \"2025-12-01T00:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "2. Get Verification Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "{{verificationId}}"]
+            },
+            "description": "Retrieve verification details and current status.\n\n**Requires authentication token.**"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "verifications", "{{verificationId}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"userId\": \"user_12345\",\n    \"status\": \"IN_PROGRESS\",\n    \"type\": \"FULL_KYC\",\n    \"documents\": [],\n    \"results\": null,\n    \"createdAt\": \"2025-12-01T00:00:00.000Z\",\n    \"updatedAt\": \"2025-12-01T00:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "3. Upload Document (Front)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload ID document image (JPEG/PNG)"
+                },
+                {
+                  "key": "documentType",
+                  "value": "DRIVERS_LICENSE",
+                  "type": "text",
+                  "description": "Types: DRIVERS_LICENSE, PASSPORT, NATIONAL_ID, RESIDENCE_PERMIT, VOTER_ID, OTHER"
+                },
+                {
+                  "key": "side",
+                  "value": "FRONT",
+                  "type": "text",
+                  "description": "FRONT or BACK"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "{{verificationId}}", "documents"]
+            },
+            "description": "Upload the front side of an ID document. The API will extract data using OCR.\n\n**Requires authentication token.**"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "document",
+                      "type": "file",
+                      "src": []
+                    },
+                    {
+                      "key": "documentType",
+                      "value": "DRIVERS_LICENSE",
+                      "type": "text"
+                    },
+                    {
+                      "key": "side",
+                      "value": "FRONT",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/documents",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "verifications", "{{verificationId}}", "documents"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"document\": {\n      \"id\": \"doc_123\",\n      \"type\": \"DRIVERS_LICENSE\",\n      \"side\": \"FRONT\",\n      \"qualityScore\": 0.92\n    },\n    \"extractedData\": {\n      \"documentNumber\": \"DL123456789\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"dateOfBirth\": \"1990-01-15\",\n      \"expiryDate\": \"2028-05-20\",\n      \"issuingCountry\": \"USA\",\n      \"confidence\": 0.95\n    },\n    \"quality\": {\n      \"isBlurry\": false,\n      \"hasGlare\": false,\n      \"isComplete\": true,\n      \"qualityScore\": 0.92,\n      \"issues\": []\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "4. Upload Document (Back)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload back side of ID document (JPEG/PNG)"
+                },
+                {
+                  "key": "documentType",
+                  "value": "DRIVERS_LICENSE",
+                  "type": "text"
+                },
+                {
+                  "key": "side",
+                  "value": "BACK",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "{{verificationId}}", "documents"]
+            },
+            "description": "Upload the back side of an ID document (if applicable).\n\n**Requires authentication token.**"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Upload Selfie",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "selfie",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload selfie photo (JPEG/PNG)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/selfie",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "{{verificationId}}", "selfie"]
+            },
+            "description": "Upload a selfie photo for biometric verification and face matching.\n\n**Requires authentication token.**"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "selfie",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/selfie",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "verifications", "{{verificationId}}", "selfie"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"faceDetected\": true,\n    \"faceCount\": 1,\n    \"faceQuality\": 0.89,\n    \"landmarks\": {\n      \"leftEye\": {\"x\": 120, \"y\": 150},\n      \"rightEye\": {\"x\": 180, \"y\": 150},\n      \"nose\": {\"x\": 150, \"y\": 180},\n      \"leftMouth\": {\"x\": 130, \"y\": 210},\n      \"rightMouth\": {\"x\": 170, \"y\": 210}\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "6. Compare Faces",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "description": "First image: document photo"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "description": "Second image: selfie photo"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/compare-faces",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "{{verificationId}}", "compare-faces"]
+            },
+            "description": "Compare face from ID document with selfie photo.\n\n**Requires authentication token.**"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "images",
+                      "type": "file",
+                      "src": []
+                    },
+                    {
+                      "key": "images",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/compare-faces",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "verifications", "{{verificationId}}", "compare-faces"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"match\": true,\n    \"similarity\": 0.94,\n    \"confidence\": 0.96,\n    \"threshold\": 0.80\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "7. Submit Verification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "verifications", "{{verificationId}}", "submit"]
+            },
+            "description": "Submit the verification for final processing and decision.\n\n**Requires authentication token.**"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/submit",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "verifications", "{{verificationId}}", "submit"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"passed\": true,\n    \"score\": 0.92,\n    \"riskLevel\": \"LOW\",\n    \"checks\": {\n      \"documentAuthentic\": true,\n      \"documentExpired\": false,\n      \"documentTampered\": false,\n      \"faceMatch\": true,\n      \"faceMatchScore\": 0.94,\n      \"livenessCheck\": true,\n      \"livenessScore\": 0.88\n    },\n    \"extractedData\": {\n      \"documentNumber\": \"DL123456789\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"fullName\": \"John Doe\",\n      \"dateOfBirth\": \"1990-01-15\",\n      \"issuingCountry\": \"USA\",\n      \"expiryDate\": \"2028-05-20\",\n      \"confidence\": 0.95\n    },\n    \"flags\": [],\n    \"warnings\": []\n  }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "All verification endpoints - require JWT authentication"
+    }
+  ]
+}
