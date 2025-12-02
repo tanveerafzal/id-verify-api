@@ -8,7 +8,7 @@ export const apiKeyMiddleware = async (
   req: PartnerRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     // Check for API key in query parameter or header
     const apiKey = req.query.apiKey as string || req.headers['x-api-key'] as string;

@@ -67,12 +67,17 @@ fi
 echo ""
 echo "Step 2: Installing dependencies..."
 echo "-----------------------------------"
-npm install --production
+# Install all dependencies (including dev deps needed for build)
+npm install
 
 echo ""
 echo "Step 3: Building application..."
 echo "-----------------------------------"
 npm run build
+
+# Optional: Remove dev dependencies after build to save space
+# Uncomment the line below if you want to minimize disk usage
+# npm prune --production
 
 echo ""
 echo "Step 4: Setting up database..."

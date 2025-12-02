@@ -8,7 +8,7 @@ export const partnerAuthMiddleware = (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+): void => {
   try {
     const token = partnerService.extractTokenFromHeader(req.headers.authorization);
 

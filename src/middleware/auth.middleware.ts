@@ -10,7 +10,7 @@ export interface AuthRequest extends Request {
   };
 }
 
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
   try {
     const token = authService.extractTokenFromHeader(req.headers.authorization);
 

@@ -172,7 +172,7 @@ export class PartnerController {
     }
   }
 
-  async getTiers(req: Request, res: Response) {
+  async getTiers(req: Request, res: Response): Promise<Response> {
     try {
       const tiers = await partnerService.getAllTiers();
 
