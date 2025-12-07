@@ -8,45 +8,38 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  username      String    @unique
-  email         String?   @unique
-  password      String
-  role          UserRole  @default(USER)
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id            String         @id @default(uuid())
+  email         String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  fullName      String?
+  phone         String?
+  verifications Verification[] @relation("UserVerifications")
 
-  @@index([username])
   @@index([email])
 }
 
 model Partner {
-  id                String          @id @default(uuid())
-  email             String          @unique
+  id                String         @id @default(uuid())
+  email             String         @unique
   password          String
   companyName       String
   contactName       String
   phone             String?
-
-  // Tier Management
   tierId            String
-  tier              Tier            @relation(fields: [tierId], references: [id])
-
-  // API Credentials
-  apiKey            String          @unique @default(uuid())
-  apiSecret         String          @default(uuid())
-
-  // Usage Tracking
-  verificationsUsed Int             @default(0)
-  verifications     Verification[]  @relation("PartnerVerifications")
-
-  // Status
-  isActive          Boolean         @default(true)
-
-  // Timestamps
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  apiKey            String         @unique @default(uuid())
+  apiSecret         String         @default(uuid())
+  verificationsUsed Int            @default(0)
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  address           String?
+  logoUrl           String?
+  website           String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  tier              Tier           @relation(fields: [tierId], references: [id])
+  verifications     Verification[] @relation("PartnerVerifications")
 
   @@index([email])
   @@index([apiKey])
@@ -54,53 +47,41 @@ model Partner {
 }
 
 model Tier {
-  id                    String    @id @default(uuid())
-  name                  String    @unique
-  displayName           String
-  monthlyPrice          Float
-  yearlyPrice           Float
-
-  // Limits
-  monthlyVerifications  Int
-  apiCallsPerMinute     Int       @default(10)
-
-  // Features
-  features              Json
-
-  // Timestamps
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  partners              Partner[]
+  id                   String    @id @default(uuid())
+  name                 String    @unique
+  displayName          String
+  monthlyPrice         Float
+  yearlyPrice          Float
+  monthlyVerifications Int
+  apiCallsPerMinute    Int       @default(10)
+  features             Json
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  partners             Partner[]
 
   @@index([name])
 }
 
 model Verification {
-  id                String            @id @default(uuid())
-  userId            String?
-  partnerId         String?
-  partner           Partner?          @relation("PartnerVerifications", fields: [partnerId], references: [id])
-  status            VerificationStatus @default(PENDING)
-  type              VerificationType
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  completedAt       DateTime?
-
-  // Document Information
-  documents         Document[]
-
-  // Verification Results
-  results           VerificationResult?
-
-  // Metadata
-  metadata          Json?
-  ipAddress         String?
-  userAgent         String?
-
-  // Webhook
-  webhookUrl        String?
-  webhookEvents     WebhookEvent[]
+  id            String              @id @default(uuid())
+  userId        String?
+  status        VerificationStatus  @default(PENDING)
+  type          VerificationType
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  completedAt   DateTime?
+  metadata      Json?
+  ipAddress     String?
+  userAgent     String?
+  webhookUrl    String?
+  partnerId     String?
+  maxRetries    Int                 @default(5)
+  retryCount    Int                 @default(0)
+  documents     Document[]
+  partner       Partner?            @relation("PartnerVerifications", fields: [partnerId], references: [id])
+  user          User?               @relation("UserVerifications", fields: [userId], references: [id])
+  results       VerificationResult?
+  webhookEvents WebhookEvent[]
 
   @@index([userId])
   @@index([partnerId])
@@ -109,99 +90,71 @@ model Verification {
 }
 
 model Document {
-  id                String          @id @default(uuid())
-  verificationId    String
-  verification      Verification    @relation(fields: [verificationId], references: [id], onDelete: Cascade)
-
-  type              DocumentType
-  side              DocumentSide?
-
-  // File Information
-  originalUrl       String
-  processedUrl      String?
-  thumbnailUrl      String?
-
-  // Extracted Data
-  extractedData     Json?
-
-  // Quality Checks
-  qualityScore      Float?
-  isBlurry          Boolean         @default(false)
-  hasGlare          Boolean         @default(false)
-  isComplete        Boolean         @default(true)
-
-  // OCR Results
-  ocrText           String?
-  ocrConfidence     Float?
-
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  id             String        @id @default(uuid())
+  verificationId String
+  type           DocumentType
+  side           DocumentSide?
+  originalUrl    String
+  processedUrl   String?
+  thumbnailUrl   String?
+  extractedData  Json?
+  qualityScore   Float?
+  isBlurry       Boolean       @default(false)
+  hasGlare       Boolean       @default(false)
+  isComplete     Boolean       @default(true)
+  ocrText        String?
+  ocrConfidence  Float?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  verification   Verification  @relation(fields: [verificationId], references: [id], onDelete: Cascade)
 
   @@index([verificationId])
   @@index([type])
 }
 
 model VerificationResult {
-  id                String          @id @default(uuid())
-  verificationId    String          @unique
-  verification      Verification    @relation(fields: [verificationId], references: [id], onDelete: Cascade)
-
-  // Overall Result
-  passed            Boolean         @default(false)
+  id                String       @id @default(uuid())
+  verificationId    String       @unique
+  passed            Boolean      @default(false)
   score             Float?
-  riskLevel         RiskLevel       @default(MEDIUM)
-
-  // Identity Checks
+  riskLevel         RiskLevel    @default(MEDIUM)
   nameMatch         Boolean?
   dateOfBirthMatch  Boolean?
   addressMatch      Boolean?
-
-  // Document Checks
   documentAuthentic Boolean?
   documentExpired   Boolean?
   documentTampered  Boolean?
-
-  // Biometric Checks
   faceMatch         Boolean?
   faceMatchScore    Float?
   livenessCheck     Boolean?
   livenessScore     Float?
-
-  // Extracted Information
   extractedName     String?
   extractedDob      DateTime?
   extractedAddress  String?
   documentNumber    String?
   issuingCountry    String?
   expiryDate        DateTime?
-
-  // Flags and Warnings
   flags             String[]
   warnings          String[]
-
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  extractedData     Json?
+  verification      Verification @relation(fields: [verificationId], references: [id], onDelete: Cascade)
 }
 
 model WebhookEvent {
-  id                String          @id @default(uuid())
-  verificationId    String
-  verification      Verification    @relation(fields: [verificationId], references: [id], onDelete: Cascade)
-
-  eventType         String
-  payload           Json
-
-  // Delivery Information
-  delivered         Boolean         @default(false)
-  deliveryAttempts  Int             @default(0)
-  lastAttemptAt     DateTime?
-  deliveredAt       DateTime?
-
-  // Response
-  responseStatus    Int?
-  responseBody      String?
-
-  createdAt         DateTime        @default(now())
+  id               String       @id @default(uuid())
+  verificationId   String
+  eventType        String
+  payload          Json
+  delivered        Boolean      @default(false)
+  deliveryAttempts Int          @default(0)
+  lastAttemptAt    DateTime?
+  deliveredAt      DateTime?
+  responseStatus   Int?
+  responseBody     String?
+  createdAt        DateTime     @default(now())
+  verification     Verification @relation(fields: [verificationId], references: [id], onDelete: Cascade)
 
   @@index([verificationId])
   @@index([delivered])
@@ -230,6 +183,7 @@ enum DocumentType {
   NATIONAL_ID
   RESIDENCE_PERMIT
   VOTER_ID
+  SELFIE
   OTHER
 }
 
@@ -243,10 +197,4 @@ enum RiskLevel {
   MEDIUM
   HIGH
   CRITICAL
-}
-
-enum UserRole {
-  ADMIN
-  USER
-  API_CLIENT
 }

@@ -32,6 +32,19 @@ export const config = {
     ocrServiceUrl: process.env.OCR_SERVICE_URL || 'http://localhost:5001'
   },
 
+  googleCloud: {
+    projectId: process.env.GOOGLE_CLOUD_PROJECT || '',
+    credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS || ''
+  },
+
+  ultrareach360: {
+    apiUrl: process.env.ULTRAREACH360_API_URL || 'https://ultrareach360-api.vercel.app/v1',
+    username: process.env.ULTRAREACH360_USERNAME || 'ussols@gmail.com',
+    password: process.env.ULTRAREACH360_PASSWORD || 'Ultrareach360',
+    apiKey: process.env.ULTRAREACH360_API_KEY || 'ur360_822338bc2791636164f56dc8c5e27d04d9f47c2a9b537ef88d2d861003d05347',
+    businessGroup: process.env.ULTRAREACH360_BUSINESS_GROUP || 'The ID verification Company'
+  },
+
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10)

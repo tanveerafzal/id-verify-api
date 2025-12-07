@@ -1,5 +1,7 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { VerificationController } from '../controllers/verification.controller';
 import { apiKeyMiddleware } from '../middleware/api-key.middleware';
 import { config } from '../config';
@@ -7,7 +9,33 @@ import { config } from '../config';
 const router = Router();
 const controller = new VerificationController();
 
-const storage = multer.memoryStorage();
+// Check if S3 is configured
+const isS3Configured = !!(process.env.AWS_S3_BUCKET && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+
+// Use memory storage for S3, disk storage for local
+const storage = isS3Configured
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req: Request, _file, cb) => {
+        const verificationId = req.params.verificationId || 'unknown';
+        const uploadDir = path.join(__dirname, '../../uploads/documents', verificationId);
+
+        // Create directory if it doesn't exist
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
+        cb(null, uploadDir);
+      },
+      filename: (_req, file, cb) => {
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+        const ext = path.extname(file.originalname) || '.jpg';
+        cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+      }
+    });
+
+console.log(`[VerificationRoutes] Storage mode: ${isS3Configured ? 'AWS S3' : 'Local disk'}`);
+
 const upload = multer({
   storage,
   limits: {

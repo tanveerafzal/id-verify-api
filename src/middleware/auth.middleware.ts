@@ -5,8 +5,8 @@ const authService = new AuthService();
 
 export interface AuthRequest extends Request {
   user?: {
-    username: string;
-    role: string;
+    userId: string;
+    email: string;
   };
 }
 
@@ -15,29 +15,31 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
     const token = authService.extractTokenFromHeader(req.headers.authorization);
 
     if (!token) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Authentication required. Please provide a valid Bearer token.'
       });
+      return;
     }
 
     const payload = authService.verifyToken(token);
 
     if (!payload) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Invalid or expired token'
       });
+      return;
     }
 
     req.user = {
-      username: payload.username,
-      role: payload.role
+      userId: payload.userId,
+      email: payload.email
     };
 
     next();
   } catch (error) {
-    return res.status(401).json({
+    res.status(401).json({
       success: false,
       error: 'Authentication failed'
     });

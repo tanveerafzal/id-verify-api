@@ -1,97 +1,65 @@
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { config } from '../config';
 
 const prisma = new PrismaClient();
 
 export interface TokenPayload {
   userId: string;
-  username: string;
-  role: string;
+  email: string;
 }
 
-export interface RegisterUserData {
-  username: string;
-  email?: string;
-  password: string;
-  role?: UserRole;
+export interface CreateUserData {
+  email: string;
+  fullName?: string;
+  phone?: string;
 }
 
 export class AuthService {
-  async register(data: RegisterUserData): Promise<{ id: string; username: string; email?: string | null; role: string } | null> {
-    try {
-      // Check if username already exists
-      const existingUser = await prisma.user.findUnique({
-        where: { username: data.username }
-      });
+  /**
+   * Create a new user (for verification purposes)
+   */
+  async createUser(data: CreateUserData) {
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email }
+    });
 
-      if (existingUser) {
-        throw new Error('Username already exists');
-      }
-
-      // Check if email already exists (if provided)
-      if (data.email) {
-        const existingEmail = await prisma.user.findUnique({
-          where: { email: data.email }
-        });
-
-        if (existingEmail) {
-          throw new Error('Email already exists');
-        }
-      }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(data.password, 10);
-
-      // Create user
-      const user = await prisma.user.create({
-        data: {
-          username: data.username,
-          email: data.email,
-          password: hashedPassword,
-          role: data.role || UserRole.USER
-        },
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          role: true
-        }
-      });
-
-      return user;
-    } catch (error) {
-      throw error;
+    if (existingUser) {
+      return existingUser;
     }
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email: data.email,
+        fullName: data.fullName,
+        phone: data.phone
+      }
+    });
+
+    return user;
   }
 
-  async login(username: string, password: string): Promise<string | null> {
-    const user = await prisma.user.findUnique({
-      where: { username }
+  /**
+   * Find or create user by email
+   */
+  async findOrCreateUser(email: string, fullName?: string, phone?: string) {
+    let user = await prisma.user.findUnique({
+      where: { email }
     });
 
     if (!user) {
-      return null;
+      user = await prisma.user.create({
+        data: {
+          email,
+          fullName,
+          phone
+        }
+      });
     }
 
-    if (!user.isActive) {
-      throw new Error('Account is deactivated');
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-
-    if (!isValidPassword) {
-      return null;
-    }
-
-    const token = this.generateToken({
-      userId: user.id,
-      username: user.username,
-      role: user.role
-    });
-
-    return token;
+    return user;
   }
 
   generateToken(payload: TokenPayload): string {
@@ -123,24 +91,22 @@ export class AuthService {
       where: { id: userId },
       select: {
         id: true,
-        username: true,
         email: true,
-        role: true,
-        isActive: true,
+        fullName: true,
+        phone: true,
         createdAt: true
       }
     });
   }
 
-  async getUserByUsername(username: string) {
+  async getUserByEmail(email: string) {
     return await prisma.user.findUnique({
-      where: { username },
+      where: { email },
       select: {
         id: true,
-        username: true,
         email: true,
-        role: true,
-        isActive: true,
+        fullName: true,
+        phone: true,
         createdAt: true
       }
     });

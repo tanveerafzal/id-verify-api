@@ -1,9 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { config } from '../config';
+import { EmailService } from './email.service';
+import { s3Service } from './s3.service';
+import { logger } from '../utils/logger';
 
 const prisma = new PrismaClient();
+const emailService = new EmailService();
 
 interface RegisterPartnerData {
   email: string;
@@ -132,6 +137,9 @@ export class PartnerService {
       companyName: partner.companyName,
       contactName: partner.contactName,
       phone: partner.phone,
+      logoUrl: partner.logoUrl,
+      website: partner.website,
+      address: partner.address,
       tier: partner.tier,
       apiKey: partner.apiKey,
       apiSecret: partner.apiSecret,
@@ -139,6 +147,48 @@ export class PartnerService {
       isActive: partner.isActive,
       createdAt: partner.createdAt,
       updatedAt: partner.updatedAt
+    };
+  }
+
+  async updatePartnerProfile(partnerId: string, data: {
+    companyName?: string;
+    contactName?: string;
+    phone?: string;
+    logoUrl?: string;
+    website?: string;
+    address?: string;
+  }) {
+    const updatedPartner = await prisma.partner.update({
+      where: { id: partnerId },
+      data: {
+        companyName: data.companyName,
+        contactName: data.contactName,
+        phone: data.phone,
+        logoUrl: data.logoUrl,
+        website: data.website,
+        address: data.address
+      },
+      include: {
+        tier: true
+      }
+    });
+
+    return {
+      id: updatedPartner.id,
+      email: updatedPartner.email,
+      companyName: updatedPartner.companyName,
+      contactName: updatedPartner.contactName,
+      phone: updatedPartner.phone,
+      logoUrl: updatedPartner.logoUrl,
+      website: updatedPartner.website,
+      address: updatedPartner.address,
+      tier: updatedPartner.tier,
+      apiKey: updatedPartner.apiKey,
+      apiSecret: updatedPartner.apiSecret,
+      verificationsUsed: updatedPartner.verificationsUsed,
+      isActive: updatedPartner.isActive,
+      createdAt: updatedPartner.createdAt,
+      updatedAt: updatedPartner.updatedAt
     };
   }
 
@@ -310,14 +360,378 @@ export class PartnerService {
     const verifications = await prisma.verification.findMany({
       where: { partnerId },
       include: {
-        results: true
+        results: true,
+        documents: true,
+        user: true
       },
       orderBy: {
         createdAt: 'desc'
       }
     });
 
-    return verifications;
+    // Map to include user info in response format
+    return verifications.map(v => ({
+      ...v,
+      userName: v.user?.fullName,
+      userEmail: v.user?.email,
+      userPhone: v.user?.phone
+    }));
+  }
+
+  async getPartnerVerificationById(partnerId: string, verificationId: string) {
+    const verification = await prisma.verification.findUnique({
+      where: { id: verificationId },
+      include: {
+        documents: true,
+        results: true,
+        user: true
+      }
+    });
+
+    if (!verification) {
+      throw new Error('Verification not found');
+    }
+
+    // Verify it belongs to this partner
+    if (verification.partnerId !== partnerId) {
+      throw new Error('Unauthorized: Verification does not belong to this partner');
+    }
+
+    // Generate pre-signed URLs for documents if S3 is enabled
+    const documentsWithSignedUrls = await Promise.all(
+      verification.documents.map(async (doc) => {
+        let signedOriginalUrl = doc.originalUrl;
+        let signedProcessedUrl = doc.processedUrl;
+        let signedThumbnailUrl = doc.thumbnailUrl;
+
+        // Generate pre-signed URLs for S3 objects
+        if (s3Service.isEnabled()) {
+          try {
+            if (doc.originalUrl) {
+              const key = s3Service.extractKeyFromUrl(doc.originalUrl);
+              if (key) {
+                signedOriginalUrl = await s3Service.getSignedUrl(key, 3600); // 1 hour expiry
+              }
+            }
+            if (doc.processedUrl) {
+              const key = s3Service.extractKeyFromUrl(doc.processedUrl);
+              if (key) {
+                signedProcessedUrl = await s3Service.getSignedUrl(key, 3600);
+              }
+            }
+            if (doc.thumbnailUrl) {
+              const key = s3Service.extractKeyFromUrl(doc.thumbnailUrl);
+              if (key) {
+                signedThumbnailUrl = await s3Service.getSignedUrl(key, 3600);
+              }
+            }
+          } catch (error) {
+            logger.error(`[PartnerService] Failed to generate signed URL for document ${doc.id}:`, error);
+          }
+        }
+
+        return {
+          id: doc.id,
+          type: doc.type,
+          side: doc.side,
+          originalUrl: signedOriginalUrl,
+          processedUrl: signedProcessedUrl,
+          thumbnailUrl: signedThumbnailUrl,
+          qualityScore: doc.qualityScore,
+          isBlurry: doc.isBlurry,
+          hasGlare: doc.hasGlare,
+          isComplete: doc.isComplete,
+          ocrConfidence: doc.ocrConfidence,
+          extractedData: doc.extractedData,
+          createdAt: doc.createdAt
+        };
+      })
+    );
+
+    // Format the response with the required structure
+    const response: any = {
+      id: verification.id,
+      status: verification.status,
+      type: verification.type,
+      userName: verification.user?.fullName,
+      userEmail: verification.user?.email,
+      userPhone: verification.user?.phone,
+      createdAt: verification.createdAt,
+      updatedAt: verification.updatedAt,
+      completedAt: verification.completedAt,
+      retryCount: verification.retryCount,
+      maxRetries: verification.maxRetries,
+      documents: documentsWithSignedUrls,
+      results: null
+    };
+
+    // Add results if available
+    if (verification.results) {
+      const r = verification.results;
+      response.results = {
+        id: r.id,
+        passed: r.passed,
+        score: r.score,
+        riskLevel: r.riskLevel,
+        checks: {
+          documentAuthentic: r.documentAuthentic,
+          documentExpired: r.documentExpired,
+          documentTampered: r.documentTampered,
+          faceMatch: r.faceMatch,
+          faceMatchScore: r.faceMatchScore,
+          livenessCheck: r.livenessCheck,
+          livenessScore: r.livenessScore,
+          nameMatch: r.nameMatch,
+          dateOfBirthMatch: r.dateOfBirthMatch,
+          addressMatch: r.addressMatch
+        },
+        extractedData: r.extractedData || {
+          fullName: r.extractedName,
+          dateOfBirth: r.extractedDob,
+          documentNumber: r.documentNumber,
+          expiryDate: r.expiryDate,
+          issuingCountry: r.issuingCountry,
+          address: r.extractedAddress
+        },
+        flags: r.flags || [],
+        warnings: r.warnings || [],
+        createdAt: r.createdAt
+      };
+    }
+
+    return response;
+  }
+
+  async requestVerification(partnerId: string, data: {
+    userName: string;
+    userEmail: string;
+    userPhone?: string;
+    type: string;
+    webhookUrl?: string;
+  }) {
+    try {
+      logger.info(`[PartnerService] Requesting verification for partner: ${partnerId}`);
+
+      // Verify partner exists
+      const partner = await prisma.partner.findUnique({
+        where: { id: partnerId }
+      });
+
+      if (!partner) {
+        logger.error(`[PartnerService] Partner not found: ${partnerId}`);
+        throw new Error('Partner not found');
+      }
+
+      logger.info(`[PartnerService] Partner found: ${partner.email}`);
+
+      // Check if user exists, create if not
+      let user = await prisma.user.findUnique({
+        where: { email: data.userEmail }
+      });
+
+      if (!user) {
+        logger.info(`[PartnerService] Creating new user: ${data.userEmail}`);
+
+        user = await prisma.user.create({
+          data: {
+            email: data.userEmail,
+            fullName: data.userName,
+            phone: data.userPhone
+          }
+        });
+
+        logger.info(`[PartnerService] User created with ID: ${user.id}`);
+      } else {
+        // Update user info if changed
+        logger.info(`[PartnerService] User already exists: ${user.id}, updating info`);
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            fullName: data.userName,
+            phone: data.userPhone
+          }
+        });
+      }
+
+      // Create verification request
+      const verification = await prisma.verification.create({
+        data: {
+          partnerId,
+          userId: user.id,
+          type: data.type as any,
+          webhookUrl: data.webhookUrl,
+          status: 'PENDING'
+        },
+        include: {
+          results: true,
+          user: true
+        }
+      });
+
+      logger.info(`[PartnerService] Verification created with ID: ${verification.id}`);
+
+      // Increment partner's verification count
+      await prisma.partner.update({
+        where: { id: partnerId },
+        data: {
+          verificationsUsed: {
+            increment: 1
+          }
+        }
+      });
+
+      // Generate verification link
+      const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify?verificationId=${verification.id}`;
+
+      // Send email to user
+      try {
+        logger.info(`[PartnerService] Sending verification email to: ${user.email}`);
+
+        await emailService.sendVerificationEmail(
+          user.email,
+          user.fullName || 'User',
+          verificationLink
+        );
+
+        logger.info(`[PartnerService] Email sent successfully to: ${user.email}`);
+      } catch (emailError) {
+        // Log error but don't fail the verification creation
+        logger.error('[PartnerService] Failed to send email:', emailError);
+        // Continue without failing - partner can still share link manually
+      }
+
+      return verification;
+    } catch (error) {
+      logger.error('[PartnerService] Error in requestVerification:', error);
+      throw error;
+    }
+  }
+
+  async resendVerificationEmail(partnerId: string, verificationId: string) {
+    try {
+      logger.info(`[PartnerService] Resending email for verification: ${verificationId}`);
+
+      // Get verification with user
+      const verification = await prisma.verification.findUnique({
+        where: { id: verificationId },
+        include: { user: true }
+      });
+
+      if (!verification) {
+        throw new Error('Verification not found');
+      }
+
+      // Verify it belongs to this partner
+      if (verification.partnerId !== partnerId) {
+        throw new Error('Unauthorized: Verification does not belong to this partner');
+      }
+
+      if (!verification.user) {
+        throw new Error('Verification missing user information');
+      }
+
+      // Generate verification link
+      const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify?verificationId=${verification.id}`;
+
+      // Send email
+      await emailService.sendVerificationEmail(
+        verification.user.email,
+        verification.user.fullName || 'User',
+        verificationLink
+      );
+
+      logger.info(`[PartnerService] Email resent successfully to: ${verification.user.email}`);
+    } catch (error) {
+      logger.error('[PartnerService] Error resending email:', error);
+      throw error;
+    }
+  }
+
+  async forgotPassword(email: string) {
+    try {
+      logger.info(`[PartnerService] Forgot password request for: ${email}`);
+
+      const partner = await prisma.partner.findUnique({
+        where: { email }
+      });
+
+      if (!partner) {
+        // Don't reveal if email exists or not for security
+        logger.info(`[PartnerService] Partner not found for email: ${email}`);
+        return { success: true, message: 'If an account exists with this email, a reset link has been sent.' };
+      }
+
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      // Save token to database
+      await prisma.partner.update({
+        where: { id: partner.id },
+        data: {
+          resetToken,
+          resetTokenExpiry
+        }
+      });
+
+      // Generate reset link - points to frontend reset page
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
+      const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+      // Send reset email
+      await emailService.sendPasswordResetEmail(
+        partner.email,
+        partner.contactName,
+        resetLink
+      );
+
+      logger.info(`[PartnerService] Password reset email sent to: ${email}`);
+
+      return { success: true, message: 'If an account exists with this email, a reset link has been sent.' };
+    } catch (error) {
+      logger.error('[PartnerService] Forgot password error:', error);
+      throw error;
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    try {
+      logger.info(`[PartnerService] Reset password attempt with token`);
+
+      const partner = await prisma.partner.findFirst({
+        where: {
+          resetToken: token,
+          resetTokenExpiry: {
+            gt: new Date()
+          }
+        }
+      });
+
+      if (!partner) {
+        logger.info(`[PartnerService] Invalid or expired reset token`);
+        throw new Error('Invalid or expired reset token');
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password and clear reset token
+      await prisma.partner.update({
+        where: { id: partner.id },
+        data: {
+          password: hashedPassword,
+          resetToken: null,
+          resetTokenExpiry: null
+        }
+      });
+
+      logger.info(`[PartnerService] Password reset successful for: ${partner.email}`);
+
+      return { success: true, message: 'Password has been reset successfully' };
+    } catch (error) {
+      logger.error('[PartnerService] Reset password error:', error);
+      throw error;
+    }
   }
 
   private generateToken(payload: { id: string; email: string; companyName: string }) {
@@ -341,5 +755,17 @@ export class PartnerService {
       return null;
     }
     return authHeader.substring(7);
+  }
+
+  async getPublicPartnerInfo(partnerId: string) {
+    const partner = await prisma.partner.findUnique({
+      where: { id: partnerId },
+      select: {
+        companyName: true,
+        logoUrl: true
+      }
+    });
+
+    return partner;
   }
 }

@@ -67,3 +67,947 @@
 {"level":"info","message":"Environment: development","timestamp":"2025-12-01 23:57:25"}
 {"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-01 23:57:44"}
 {"level":"info","message":"Environment: development","timestamp":"2025-12-01 23:57:44"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 10:26:02"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 10:26:02"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 10:27:26"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 10:27:26"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 10:28:27"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 10:28:27"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 10:28:57"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 10:28:57"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 11:50:58"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 11:50:58"}
+{"level":"info","message":"[PartnerService] Creating new user: ussols@gmail.com","timestamp":"2025-12-02 12:47:08"}
+{"clientVersion":"5.7.1","level":"error","message":"[PartnerService] Error in requestVerification: \nInvalid `prisma.user.create()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:387:34\n\n  384 if (!user) {\n  385   logger.info(`[PartnerService] Creating new user: ${data.userEmail}`);\n  386 \n→ 387   user = await prisma.user.create({\n          data: {\n            username: \"ussols@gmail.com\",\n            email: \"ussols@gmail.com\",\n            fullName: \"Malik KHan\",\n            phone: \"6452223333\",\n            role: \"USER\",\n            isActive: true,\n        +   password: String\n          }\n        })\n\nArgument `password` is missing.","name":"PrismaClientValidationError","stack":"PrismaClientValidationError: \nInvalid `prisma.user.create()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:387:34\n\n  384 if (!user) {\n  385   logger.info(`[PartnerService] Creating new user: ${data.userEmail}`);\n  386 \n→ 387   user = await prisma.user.create({\n          data: {\n            username: \"ussols@gmail.com\",\n            email: \"ussols@gmail.com\",\n            fullName: \"Malik KHan\",\n            phone: \"6452223333\",\n            role: \"USER\",\n            isActive: true,\n        +   password: String\n          }\n        })\n\nArgument `password` is missing.\n    at ti (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:118:5888)\n    at si.handleRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6473)\n    at si.handleAndLogRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6151)\n    at si.request (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:5859)\n    at async l (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:130:10025)\n    at PartnerService.requestVerification (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:387:16)\n    at PartnerController.requestVerification (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\partner.controller.ts:267:28)","timestamp":"2025-12-02 12:47:08"}
+{"clientVersion":"5.7.1","level":"error","message":"Request verification error: \nInvalid `prisma.user.create()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:387:34\n\n  384 if (!user) {\n  385   logger.info(`[PartnerService] Creating new user: ${data.userEmail}`);\n  386 \n→ 387   user = await prisma.user.create({\n          data: {\n            username: \"ussols@gmail.com\",\n            email: \"ussols@gmail.com\",\n            fullName: \"Malik KHan\",\n            phone: \"6452223333\",\n            role: \"USER\",\n            isActive: true,\n        +   password: String\n          }\n        })\n\nArgument `password` is missing.","name":"PrismaClientValidationError","stack":"PrismaClientValidationError: \nInvalid `prisma.user.create()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:387:34\n\n  384 if (!user) {\n  385   logger.info(`[PartnerService] Creating new user: ${data.userEmail}`);\n  386 \n→ 387   user = await prisma.user.create({\n          data: {\n            username: \"ussols@gmail.com\",\n            email: \"ussols@gmail.com\",\n            fullName: \"Malik KHan\",\n            phone: \"6452223333\",\n            role: \"USER\",\n            isActive: true,\n        +   password: String\n          }\n        })\n\nArgument `password` is missing.\n    at ti (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:118:5888)\n    at si.handleRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6473)\n    at si.handleAndLogRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6151)\n    at si.request (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:5859)\n    at async l (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:130:10025)\n    at PartnerService.requestVerification (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:387:16)\n    at PartnerController.requestVerification (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\partner.controller.ts:267:28)","timestamp":"2025-12-02 12:47:08"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:49:07"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:49:07"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:49:11"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:49:11"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:49:20"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:49:20"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:49:24"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:49:24"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:49:29"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:49:29"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:49:34"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:49:34"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:49:37"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:49:37"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:49:54"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:49:54"}
+{"level":"info","message":"[PartnerService] Creating new user: ussols@gmail.com","timestamp":"2025-12-02 12:50:01"}
+{"level":"info","message":"[PartnerService] User created with ID: 97e623cd-324b-4960-9102-b461fd7415df","timestamp":"2025-12-02 12:50:01"}
+{"clientVersion":"5.7.1","code":"P2003","level":"error","message":"[PartnerService] Error in requestVerification: \nInvalid `prisma.verification.create()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:405:54\n\n  402 }\n  403 \n  404 // Create verification request\n→ 405 const verification = await prisma.verification.create(\nForeign key constraint failed on the field: `Verification_partnerId_fkey (index)`","meta":{"field_name":"Verification_partnerId_fkey (index)","modelName":"Verification"},"name":"PrismaClientKnownRequestError","stack":"PrismaClientKnownRequestError: \nInvalid `prisma.verification.create()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:405:54\n\n  402 }\n  403 \n  404 // Create verification request\n→ 405 const verification = await prisma.verification.create(\nForeign key constraint failed on the field: `Verification_partnerId_fkey (index)`\n    at si.handleRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6817)\n    at si.handleAndLogRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6151)\n    at si.request (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:5859)\n    at async l (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:130:10025)\n    at PartnerService.requestVerification (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:405:28)\n    at PartnerController.requestVerification (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\partner.controller.ts:267:28)","timestamp":"2025-12-02 12:50:01"}
+{"clientVersion":"5.7.1","code":"P2003","level":"error","message":"Request verification error: \nInvalid `prisma.verification.create()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:405:54\n\n  402 }\n  403 \n  404 // Create verification request\n→ 405 const verification = await prisma.verification.create(\nForeign key constraint failed on the field: `Verification_partnerId_fkey (index)`","meta":{"field_name":"Verification_partnerId_fkey (index)","modelName":"Verification"},"name":"PrismaClientKnownRequestError","stack":"PrismaClientKnownRequestError: \nInvalid `prisma.verification.create()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:405:54\n\n  402 }\n  403 \n  404 // Create verification request\n→ 405 const verification = await prisma.verification.create(\nForeign key constraint failed on the field: `Verification_partnerId_fkey (index)`\n    at si.handleRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6817)\n    at si.handleAndLogRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6151)\n    at si.request (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:5859)\n    at async l (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:130:10025)\n    at PartnerService.requestVerification (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:405:28)\n    at PartnerController.requestVerification (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\partner.controller.ts:267:28)","timestamp":"2025-12-02 12:50:01"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:51:12"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:51:12"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 12:51:39"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 12:51:39"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-02 12:53:40"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-02 12:53:49"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-02 12:53:49"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-02 12:53:49"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-02 12:53:49","type":"IDENTITY","userEmail":"ussols@gmail.com","userName":"Malik KHan","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-02 12:53:49"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-02 12:53:49"}
+{"level":"info","message":"[PartnerService] User already exists: 97e623cd-324b-4960-9102-b461fd7415df","timestamp":"2025-12-02 12:53:49"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 240f9a22-e334-4980-ad66-faed3ae5cbc2","timestamp":"2025-12-02 12:53:49"}
+{"level":"info","message":"[PartnerService] Sending verification email to: ussols@gmail.com","timestamp":"2025-12-02 12:53:49"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-02 12:53:49"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-02 12:53:49"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-02 12:53:53"}
+{"data":{"businessGroup":"The North West Company","sentAt":"2025-12-02T17:53:55.272Z","subject":"[The North West Company] Identity Verification Required","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-02 12:53:53"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: ussols@gmail.com","timestamp":"2025-12-02 12:53:53"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for ussols@gmail.com","timestamp":"2025-12-02 12:53:53"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 13:40:12"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 13:40:12"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 13:40:38"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 13:40:38"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 13:40:57"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 13:40:57"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 16:31:33"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 16:31:33"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 16:31:43"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 16:31:43"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-02 17:04:39"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-02 17:04:39","type":"IDENTITY","userEmail":"tanverafzal@gmail.com","userName":"Malik KHan","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[PartnerService] Creating new user: tanverafzal@gmail.com","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[PartnerService] User created with ID: a9e322ff-e997-47b9-815d-777cdff1db1a","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 46c91c7b-074b-4ee1-9c34-21aa1ea8c5aa","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanverafzal@gmail.com","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[EmailService] Sending email to tanverafzal@gmail.com","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-02 17:04:39"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-02 17:04:42"}
+{"data":{"businessGroup":"The North West Company","sentAt":"2025-12-02T22:04:45.288Z","subject":"[The North West Company] Identity Verification Required","to":"tanverafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-02 17:04:43"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanverafzal@gmail.com","timestamp":"2025-12-02 17:04:43"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for tanverafzal@gmail.com","timestamp":"2025-12-02 17:04:43"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-02 20:10:27"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-02 20:10:42"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-02 20:10:42","type":"IDENTITY","userEmail":"Tanveer@trinetra.com","userName":"Malik KHan","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[PartnerService] Creating new user: Tanveer@trinetra.com","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[PartnerService] User created with ID: 8a728eb4-5ac7-4f2b-aa1b-c82956a0e590","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 5a61e6a6-87f0-48c6-8a8f-e343fb863cb9","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[PartnerService] Sending verification email to: Tanveer@trinetra.com","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[EmailService] Sending email to Tanveer@trinetra.com","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-02 20:10:42"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-02 20:10:45"}
+{"data":{"businessGroup":"The North West Company","sentAt":"2025-12-03T01:10:47.927Z","subject":"[The North West Company] Identity Verification Required","to":"Tanveer@trinetra.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-02 20:10:45"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: Tanveer@trinetra.com","timestamp":"2025-12-02 20:10:45"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for Tanveer@trinetra.com","timestamp":"2025-12-02 20:10:45"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:16:24"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:16:24"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:16:46"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:16:46"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:16:59"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:16:59"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:17:16"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:17:16"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:17:39"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:17:39"}
+{"level":"info","message":"New partner registered: ussols@gmail.com","timestamp":"2025-12-02 20:17:43"}
+{"level":"error","message":"Partner registration error: Partner with this email already exists","stack":"Error: Partner with this email already exists\n    at PartnerService.registerPartner (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:27:13)\n    at PartnerController.register (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\partner.controller.ts:63:22)","timestamp":"2025-12-02 20:21:09"}
+{"level":"info","message":"Partner logged in: ussols@gmail.com","timestamp":"2025-12-02 20:21:22"}
+{"level":"info","message":"Partner logged in: ussols@gmail.com","timestamp":"2025-12-02 20:21:31"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-02 20:30:57"}
+{"companyName":"ultrasoft solutions Inc","email":"ussols@gmail.com","id":"a141dbd8-3c85-4e37-9e33-cf8206f3d9be","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-02 20:30:57"}
+{"level":"info","message":"[PartnerController] Partner ID: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-02 20:30:57"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-02 20:30:57","type":"IDENTITY","userEmail":"ussols@gmail.com","userName":"Malik KHan","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-02 20:30:57"}
+{"level":"info","message":"[PartnerService] Partner found: ussols@gmail.com","timestamp":"2025-12-02 20:30:57"}
+{"level":"info","message":"[PartnerService] User already exists: 97e623cd-324b-4960-9102-b461fd7415df","timestamp":"2025-12-02 20:30:57"}
+{"level":"info","message":"[PartnerService] Verification created with ID: de0db6b5-2c08-4b22-a9dd-3b2241b1ca5f","timestamp":"2025-12-02 20:30:57"}
+{"level":"info","message":"[PartnerService] Sending verification email to: ussols@gmail.com","timestamp":"2025-12-02 20:30:57"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-02 20:30:57"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-02 20:30:57"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-02 20:30:59"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T01:31:02.230Z","subject":"[The ID verification Company] Identity Verification Required","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-02 20:31:00"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: ussols@gmail.com","timestamp":"2025-12-02 20:31:00"}
+{"level":"info","message":"Partner ussols@gmail.com requested verification for ussols@gmail.com","timestamp":"2025-12-02 20:31:00"}
+{"level":"info","message":"Partner ussols@gmail.com uploaded logo: http://localhost:3002/uploads/logos/partner-logo-1764725539005-133037209.png","timestamp":"2025-12-02 20:32:19"}
+{"level":"info","message":"Partner ussols@gmail.com uploaded logo: http://localhost:3002/uploads/logos/partner-logo-1764725554096-336455824.png","timestamp":"2025-12-02 20:32:34"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:37:54"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:37:54"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:38:14"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:38:14"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:40:22"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:40:22"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:41:05"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:41:05"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:41:35"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:41:35"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:44:22"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:44:22"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:44:42"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:44:42"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-02 20:48:31"}
+{"companyName":"ultrasoft solutions Inc","email":"ussols@gmail.com","id":"a141dbd8-3c85-4e37-9e33-cf8206f3d9be","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[PartnerController] Partner ID: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-02 20:48:31","type":"IDENTITY","userEmail":"tanveerafzal@gmail.com","userName":"Malik KHan","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[PartnerService] Partner found: ussols@gmail.com","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[PartnerService] Creating new user: tanveerafzal@gmail.com","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[PartnerService] User created with ID: 8306492c-0241-4acc-aff5-a69839141eed","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 77f49a4d-6f14-4ad8-bd83-7e00dcb38b05","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveerafzal@gmail.com","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-02 20:48:31"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-02 20:48:33"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T01:48:36.080Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-02 20:48:34"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-02 20:48:34"}
+{"level":"info","message":"Partner ussols@gmail.com requested verification for tanveerafzal@gmail.com","timestamp":"2025-12-02 20:48:34"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-02 20:50:56"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-02 20:50:56"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 09:12:44"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 09:12:44"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 09:30:27"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 09:30:27"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 09:30:40"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 09:30:40"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 09:31:18"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 09:31:18"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 09:31:29"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 09:31:29"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 09:43:42"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 09:43:42"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 09:46:32"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 09:46:32"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-03 09:52:53"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 09:52:53"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-03 09:52:53"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-03 09:52:56"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T14:52:56.875Z","subject":"[The ID verification Company] Verification PASSED - User","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 09:52:56"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-03 09:52:56"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 09:54:58"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 09:54:58"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 10:03:38"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 10:03:38"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 10:14:13"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 10:14:13"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 10:14:33"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 10:14:33"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 10:15:02"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 10:15:02"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 10:15:32"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 10:15:32"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 10:15:56"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 10:15:56"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 10:18:19"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 10:18:19"}
+{"level":"info","message":"[PartnerService] Forgot password request for: ussols@gmail.com","timestamp":"2025-12-03 10:18:34"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-03 10:18:34"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-03 10:18:34"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-03 10:18:37"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T15:18:38.107Z","subject":"[The ID verification Company] Password Reset Request - ID Verify","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 10:18:38"}
+{"level":"info","message":"[PartnerService] Password reset email sent to: ussols@gmail.com","timestamp":"2025-12-03 10:18:38"}
+{"level":"info","message":"Password reset requested for: ussols@gmail.com","timestamp":"2025-12-03 10:18:38"}
+{"level":"info","message":"[PartnerService] Reset password attempt with token","timestamp":"2025-12-03 10:29:26"}
+{"level":"info","message":"[PartnerService] Password reset successful for: ussols@gmail.com","timestamp":"2025-12-03 10:29:27"}
+{"level":"info","message":"Password reset successful","timestamp":"2025-12-03 10:29:27"}
+{"level":"info","message":"Partner logged in: ussols@gmail.com","timestamp":"2025-12-03 10:29:32"}
+{"level":"info","message":"[PartnerService] Resending email for verification: 77f49a4d-6f14-4ad8-bd83-7e00dcb38b05","timestamp":"2025-12-03 10:29:49"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 10:29:49"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T15:29:50.879Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 10:29:50"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-03 10:29:50"}
+{"level":"info","message":"Partner ussols@gmail.com resent email for verification 77f49a4d-6f14-4ad8-bd83-7e00dcb38b05","timestamp":"2025-12-03 10:29:50"}
+{"level":"info","message":"[PartnerService] Forgot password request for: tanveerafzal@gmail.com","timestamp":"2025-12-03 10:51:23"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 10:51:24"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T15:51:25.492Z","subject":"[The ID verification Company] Password Reset Request - ID Verify","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 10:51:25"}
+{"level":"info","message":"[PartnerService] Password reset email sent to: tanveerafzal@gmail.com","timestamp":"2025-12-03 10:51:25"}
+{"level":"info","message":"Password reset requested for: tanveerafzal@gmail.com","timestamp":"2025-12-03 10:51:25"}
+{"level":"info","message":"[PartnerService] Reset password attempt with token","timestamp":"2025-12-03 10:51:41"}
+{"level":"info","message":"[PartnerService] Password reset successful for: tanveerafzal@gmail.com","timestamp":"2025-12-03 10:51:41"}
+{"level":"info","message":"Password reset successful","timestamp":"2025-12-03 10:51:41"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-03 10:51:45"}
+{"level":"info","message":"Partner logged in: ussols@gmail.com","timestamp":"2025-12-03 11:50:50"}
+{"level":"info","message":"Partner ussols@gmail.com uploaded logo: https://2c98ddbc23a8.ngrok-free.app//uploads/logos/partner-logo-1764780687972-897848161.png","timestamp":"2025-12-03 11:51:28"}
+{"level":"info","message":"Partner ussols@gmail.com uploaded logo: https://2c98ddbc23a8.ngrok-free.app//uploads/logos/partner-logo-1764780781162-870548261.png","timestamp":"2025-12-03 11:53:01"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-03 11:55:49"}
+{"companyName":"ultrasoft solutions Inc","email":"ussols@gmail.com","id":"a141dbd8-3c85-4e37-9e33-cf8206f3d9be","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-03 11:55:49"}
+{"level":"info","message":"[PartnerController] Partner ID: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-03 11:55:49"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-03 11:55:49","type":"IDENTITY","userEmail":"tanveerafzal@gmail.com","userName":"Malik Asif","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-03 11:55:49"}
+{"level":"info","message":"[PartnerService] Partner found: ussols@gmail.com","timestamp":"2025-12-03 11:55:49"}
+{"level":"info","message":"[PartnerService] User already exists: 8306492c-0241-4acc-aff5-a69839141eed","timestamp":"2025-12-03 11:55:49"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 3006417a-5cd2-4ca3-86e1-7d58844ac804","timestamp":"2025-12-03 11:55:49"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveerafzal@gmail.com","timestamp":"2025-12-03 11:55:49"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 11:55:49"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-03 11:55:49"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-03 11:55:52"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T16:55:52.985Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 11:55:52"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-03 11:55:52"}
+{"level":"info","message":"Partner ussols@gmail.com requested verification for tanveerafzal@gmail.com","timestamp":"2025-12-03 11:55:52"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 12:01:13"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 12:01:13"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 12:05:29"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 12:05:29"}
+{"level":"info","message":"Partner ussols@gmail.com uploaded logo: https://2c98ddbc23a8.ngrok-free.app/uploads/logos/partner-logo-1764781973285-490842700.png","timestamp":"2025-12-03 12:12:53"}
+{"level":"info","message":"Partner ussols@gmail.com uploaded logo: https://2c98ddbc23a8.ngrok-free.app/uploads/logos/partner-logo-1764781997035-348148821.png","timestamp":"2025-12-03 12:13:17"}
+{"level":"info","message":"Partner ussols@gmail.com uploaded logo: https://2c98ddbc23a8.ngrok-free.app/uploads/logos/partner-logo-1764782004160-825577494.png","timestamp":"2025-12-03 12:13:24"}
+{"level":"info","message":"Partner logged in: ussols@gmail.com","timestamp":"2025-12-03 12:15:57"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-03 12:16:05"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com uploaded logo: https://2c98ddbc23a8.ngrok-free.app/uploads/logos/partner-logo-1764782281789-164583024.webp","timestamp":"2025-12-03 12:18:02"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com uploaded logo: https://2c98ddbc23a8.ngrok-free.app/uploads/logos/partner-logo-1764782311114-332950711.svg","timestamp":"2025-12-03 12:18:31"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-03 12:36:41"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-03 12:50:11"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-03 12:50:45"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-03 12:50:45"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-03 12:50:45"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-03 12:50:45","type":"IDENTITY","userEmail":"tanveerafzal@gmail.com","userName":"Malik Asif","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-03 12:50:45"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-03 12:50:45"}
+{"level":"info","message":"[PartnerService] User already exists: 8306492c-0241-4acc-aff5-a69839141eed","timestamp":"2025-12-03 12:50:45"}
+{"level":"info","message":"[PartnerService] Verification created with ID: dba206ce-50fc-44e2-be85-433aa57810d8","timestamp":"2025-12-03 12:50:45"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveerafzal@gmail.com","timestamp":"2025-12-03 12:50:45"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 12:50:45"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-03 12:50:45"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-03 12:50:47"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T17:50:48.304Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 12:50:48"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-03 12:50:48"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for tanveerafzal@gmail.com","timestamp":"2025-12-03 12:50:48"}
+{"level":"info","message":"[PartnerService] Resending email for verification: dba206ce-50fc-44e2-be85-433aa57810d8","timestamp":"2025-12-03 12:54:26"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 12:54:26"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T17:54:27.523Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 12:54:27"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-03 12:54:27"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com resent email for verification dba206ce-50fc-44e2-be85-433aa57810d8","timestamp":"2025-12-03 12:54:27"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-03 12:54:58"}
+{"level":"info","message":"[PartnerService] Resending email for verification: dba206ce-50fc-44e2-be85-433aa57810d8","timestamp":"2025-12-03 12:55:06"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 12:55:06"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T17:55:06.756Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 12:55:06"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-03 12:55:06"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com resent email for verification dba206ce-50fc-44e2-be85-433aa57810d8","timestamp":"2025-12-03 12:55:06"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-03 13:09:51"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-03 13:10:02"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-03 13:10:02"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-03 13:10:02"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-03 13:10:02","type":"IDENTITY","userEmail":"tanveerafzal@gmail.com","userName":"Malik Asif saswas","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-03 13:10:02"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-03 13:10:02"}
+{"level":"info","message":"[PartnerService] User already exists: 8306492c-0241-4acc-aff5-a69839141eed","timestamp":"2025-12-03 13:10:02"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 4cf60e22-b858-450a-96d6-1fcc0f3087c2","timestamp":"2025-12-03 13:10:02"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveerafzal@gmail.com","timestamp":"2025-12-03 13:10:02"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 13:10:02"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T18:10:04.010Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 13:10:03"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-03 13:10:03"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for tanveerafzal@gmail.com","timestamp":"2025-12-03 13:10:03"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 13:12:45"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 13:12:45"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 13:14:37"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 13:14:37"}
+{"level":"info","message":"[PartnerService] Resending email for verification: 4cf60e22-b858-450a-96d6-1fcc0f3087c2","timestamp":"2025-12-03 13:15:28"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 13:15:28"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-03 13:15:28"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-03 13:15:30"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T18:15:31.229Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 13:15:31"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-03 13:15:31"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com resent email for verification 4cf60e22-b858-450a-96d6-1fcc0f3087c2","timestamp":"2025-12-03 13:15:31"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 14:30:01"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 14:30:01"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 14:40:51"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 14:40:51"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-03 14:41:01"}
+{"level":"info","message":"[PartnerService] Resending email for verification: 4cf60e22-b858-450a-96d6-1fcc0f3087c2","timestamp":"2025-12-03 14:41:13"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 14:41:13"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-03 14:41:13"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-03 14:41:16"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T19:41:16.843Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 14:41:16"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-03 14:41:16"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com resent email for verification 4cf60e22-b858-450a-96d6-1fcc0f3087c2","timestamp":"2025-12-03 14:41:16"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 14:45:20"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 14:45:20"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-03 14:45:39"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-03 14:45:39"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-03 14:45:39"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-03 14:45:39","type":"IDENTITY","userEmail":"tanveerafzal@gmail.com","userName":"Malik KHan","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-03 14:45:39"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-03 14:45:39"}
+{"level":"info","message":"[PartnerService] User already exists: 8306492c-0241-4acc-aff5-a69839141eed","timestamp":"2025-12-03 14:45:39"}
+{"level":"info","message":"[PartnerService] Verification created with ID: bb2d31b2-5902-4d16-90f6-42f5161d7a3e","timestamp":"2025-12-03 14:45:39"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveerafzal@gmail.com","timestamp":"2025-12-03 14:45:39"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 14:45:39"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-03 14:45:39"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-03 14:45:40"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-03T19:45:40.386Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 14:45:40"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-03 14:45:40"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for tanveerafzal@gmail.com","timestamp":"2025-12-03 14:45:40"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-03 14:46:22"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-03 14:46:22"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-03 19:55:03"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-03 19:55:40"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-03 19:56:05"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-03 19:56:05"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-03 19:56:05"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-03 19:56:07"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-04T00:56:08.410Z","subject":"[The ID verification Company] Verification PASSED - User","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-03 19:56:08"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-03 19:56:08"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:21:26"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:21:26"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:21:39"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:21:39"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:21:53"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:21:53"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:50:35"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:50:35"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:51:18"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:51:18"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:51:46"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:51:46"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:52:02"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:52:02"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:52:32"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:52:32"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:53:00"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:53:00"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:53:27"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:53:27"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:53:47"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:53:48"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:54:07"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:54:07"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 12:54:41"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 12:54:41"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 13:02:06"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 13:02:06"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 13:50:31"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 13:50:31"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 13:51:02"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 13:51:02"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 13:51:13"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 13:51:13"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 14:01:11"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 14:01:11"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-04 14:01:27"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-04 14:02:41"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-04 14:02:41"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-04 14:02:41"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-04 14:02:41","type":"IDENTITY","userEmail":"tanverafzal@gmail.com","userName":"Sarahi Martin","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-04 14:02:41"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-04 14:02:41"}
+{"level":"info","message":"[PartnerService] User already exists: a9e322ff-e997-47b9-815d-777cdff1db1a","timestamp":"2025-12-04 14:02:41"}
+{"level":"info","message":"[PartnerService] Verification created with ID: dbfa5b18-806c-422a-b089-8132d437eed8","timestamp":"2025-12-04 14:02:41"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanverafzal@gmail.com","timestamp":"2025-12-04 14:02:41"}
+{"level":"info","message":"[EmailService] Sending email to tanverafzal@gmail.com","timestamp":"2025-12-04 14:02:41"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-04 14:02:41"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-04 14:02:44"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-04T19:02:45.469Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanverafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-04 14:02:44"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanverafzal@gmail.com","timestamp":"2025-12-04 14:02:44"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for tanverafzal@gmail.com","timestamp":"2025-12-04 14:02:44"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-04 14:08:39"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-04 14:08:39"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-04 14:08:39"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-04 14:08:39","type":"IDENTITY","userEmail":"ellenho1973@gmail.com","userName":"Sarah Martin","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-04 14:08:39"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-04 14:08:39"}
+{"level":"info","message":"[PartnerService] Creating new user: ellenho1973@gmail.com","timestamp":"2025-12-04 14:08:39"}
+{"level":"info","message":"[PartnerService] User created with ID: 1b52c8be-804d-46a9-a665-4a2a0570ac9b","timestamp":"2025-12-04 14:08:39"}
+{"level":"info","message":"[PartnerService] Verification created with ID: a80ff770-9715-48db-8916-1f303709ba78","timestamp":"2025-12-04 14:08:39"}
+{"level":"info","message":"[PartnerService] Sending verification email to: ellenho1973@gmail.com","timestamp":"2025-12-04 14:08:39"}
+{"level":"info","message":"[EmailService] Sending email to ellenho1973@gmail.com","timestamp":"2025-12-04 14:08:39"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-04T19:08:41.423Z","subject":"[The ID verification Company] Identity Verification Required","to":"ellenho1973@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-04 14:08:40"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: ellenho1973@gmail.com","timestamp":"2025-12-04 14:08:40"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for ellenho1973@gmail.com","timestamp":"2025-12-04 14:08:40"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-04 14:12:45"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 14:49:22"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 14:49:22"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 14:49:36"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 14:49:36"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 14:50:07"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 14:50:07"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 14:56:16"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 14:56:16"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-04 15:01:16"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-04 15:01:16"}
+{"level":"info","message":"Partner logged in: tanveerafzal@gmail.com","timestamp":"2025-12-05 07:58:55"}
+{"level":"info","message":"[PartnerService] Resending email for verification: a80ff770-9715-48db-8916-1f303709ba78","timestamp":"2025-12-05 08:00:51"}
+{"level":"info","message":"[EmailService] Sending email to ellenho1973@gmail.com","timestamp":"2025-12-05 08:00:51"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 08:00:51"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 08:00:54"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T13:00:55.920Z","subject":"[The ID verification Company] Identity Verification Required","to":"ellenho1973@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 08:00:54"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: ellenho1973@gmail.com","timestamp":"2025-12-05 08:00:54"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com resent email for verification a80ff770-9715-48db-8916-1f303709ba78","timestamp":"2025-12-05 08:00:54"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-05 08:17:37"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-05 08:17:37"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 08:17:37"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 08:17:40"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T13:17:41.917Z","subject":"[The ID verification Company] Verification PASSED - Sarah Martin","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 08:17:40"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-05 08:17:40"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 09:24:28"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 09:24:28"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 09:24:42"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 09:24:42"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 09:25:05"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 09:25:05"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 09:25:28"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 09:25:28"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 09:25:39"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 09:25:39"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 09:43:56"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 09:43:56"}
+{"level":"info","message":"[PartnerService] Resending email for verification: dbfa5b18-806c-422a-b089-8132d437eed8","timestamp":"2025-12-05 09:44:12"}
+{"level":"info","message":"[EmailService] Sending email to tanverafzal@gmail.com","timestamp":"2025-12-05 09:44:12"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 09:44:12"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 09:44:15"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T14:44:16.971Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanverafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 09:44:15"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanverafzal@gmail.com","timestamp":"2025-12-05 09:44:15"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com resent email for verification dbfa5b18-806c-422a-b089-8132d437eed8","timestamp":"2025-12-05 09:44:15"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-05 10:06:14"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-05 10:06:14"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-05 10:06:14"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-05 10:06:14","type":"IDENTITY","userEmail":"ussols@gmail.com","userName":"Mlaik Malik","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-05 10:06:14"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-05 10:06:14"}
+{"level":"info","message":"[PartnerService] User already exists: 97e623cd-324b-4960-9102-b461fd7415df","timestamp":"2025-12-05 10:06:14"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 84e9556c-6967-4239-be1a-23fc1c0aac8b","timestamp":"2025-12-05 10:06:14"}
+{"level":"info","message":"[PartnerService] Sending verification email to: ussols@gmail.com","timestamp":"2025-12-05 10:06:14"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-05 10:06:14"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T15:06:17.412Z","subject":"[The ID verification Company] Identity Verification Required","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 10:06:16"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: ussols@gmail.com","timestamp":"2025-12-05 10:06:16"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for ussols@gmail.com","timestamp":"2025-12-05 10:06:16"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-05 10:20:55"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-05 10:20:55"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 10:20:55"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 10:20:58"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T15:21:00.021Z","subject":"[The ID verification Company] Verification PASSED - Mlaik Malik","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 10:20:58"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-05 10:20:58"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 10:24:23"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 10:24:23"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 10:53:01"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 10:53:01"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 10:53:01"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/74e2d22c-e67a-4782-b4a0-447adf2ec9ed/documents/DRIVERS_LICENSE-1764949990230-passport-data-page-large.jpg","timestamp":"2025-12-05 10:53:10"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/74e2d22c-e67a-4782-b4a0-447adf2ec9ed/selfies/selfie-1764950012032-selfie.jpg","timestamp":"2025-12-05 10:53:32"}
+{"level":"info","message":"[PartnerService] Resending email for verification: 7ee16ea7-8872-4929-8a8e-3ff906085f15","timestamp":"2025-12-05 11:02:52"}
+{"level":"error","message":"[PartnerService] Error resending email: Verification missing user information","stack":"Error: Verification missing user information\n    at PartnerService.resendVerificationEmail (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:581:15)\n    at PartnerController.resendVerificationEmail (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\partner.controller.ts:462:7)","timestamp":"2025-12-05 11:02:52"}
+{"level":"error","message":"Resend verification email error: Verification missing user information","stack":"Error: Verification missing user information\n    at PartnerService.resendVerificationEmail (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\partner.service.ts:581:15)\n    at PartnerController.resendVerificationEmail (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\partner.controller.ts:462:7)","timestamp":"2025-12-05 11:02:52"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 11:21:08"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 11:21:09"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 11:21:09"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 11:21:18"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 11:21:18"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 11:21:18"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 11:21:33"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 11:21:33"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 11:21:33"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 11:21:51"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 11:21:52"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 11:21:52"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 11:22:07"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 11:22:07"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 11:22:07"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 11:22:37"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 11:22:38"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 11:22:38"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 11:22:48"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 11:22:48"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 11:22:48"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 11:47:30"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 11:47:31"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 11:47:31"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-05 12:05:58"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-05 12:05:58","type":"IDENTITY","userEmail":"sobia_tanver@hotmail.com","userName":"Sarah Martin","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[PartnerService] Creating new user: sobia_tanver@hotmail.com","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[PartnerService] User created with ID: c6473bd0-2047-42fd-b4c1-2911bf9988ab","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 26c873fb-2cd2-4d77-9c61-67a093b4c430","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[PartnerService] Sending verification email to: sobia_tanver@hotmail.com","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[EmailService] Sending email to sobia_tanver@hotmail.com","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 12:05:58"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 12:06:01"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T17:06:03.377Z","subject":"[The ID verification Company] Identity Verification Required","to":"sobia_tanver@hotmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 12:06:01"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: sobia_tanver@hotmail.com","timestamp":"2025-12-05 12:06:01"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for sobia_tanver@hotmail.com","timestamp":"2025-12-05 12:06:01"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/26c873fb-2cd2-4d77-9c61-67a093b4c430/documents/PASSPORT-1764954471696-ontaio-can2-1.png","timestamp":"2025-12-05 12:07:52"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/26c873fb-2cd2-4d77-9c61-67a093b4c430/selfies/selfie-1764954481743-selfie.jpg","timestamp":"2025-12-05 12:08:02"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-05 12:08:02"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-05 12:08:02"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 12:08:02"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 12:08:03"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T17:08:04.986Z","subject":"[The ID verification Company] Verification PASSED - Sarah Martin","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 12:08:03"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-05 12:08:03"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 12:13:51"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 12:13:51"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 12:13:51"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 12:14:21"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 12:14:22"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 12:14:22"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 12:14:32"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 12:14:32"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 12:14:32"}
+{"level":"info","message":"Partner logged in: ussols@gmail.com","timestamp":"2025-12-05 13:27:04"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-05 13:27:32"}
+{"companyName":"ultrasoft solutions Inc","email":"ussols@gmail.com","id":"a141dbd8-3c85-4e37-9e33-cf8206f3d9be","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-05 13:27:32"}
+{"level":"info","message":"[PartnerController] Partner ID: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-05 13:27:32"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-05 13:27:32","type":"IDENTITY","userEmail":"Tanveer@trinetra.com","userName":"Jeremy Power","userPhone":"5367778899"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-05 13:27:32"}
+{"level":"info","message":"[PartnerService] Partner found: ussols@gmail.com","timestamp":"2025-12-05 13:27:32"}
+{"level":"info","message":"[PartnerService] User already exists: 8a728eb4-5ac7-4f2b-aa1b-c82956a0e590, updating info","timestamp":"2025-12-05 13:27:32"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 5281720b-a899-4766-97ef-03304b5d0c98","timestamp":"2025-12-05 13:27:32"}
+{"level":"info","message":"[PartnerService] Sending verification email to: Tanveer@trinetra.com","timestamp":"2025-12-05 13:27:32"}
+{"level":"info","message":"[EmailService] Sending email to Tanveer@trinetra.com","timestamp":"2025-12-05 13:27:32"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 13:27:32"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 13:27:35"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T18:27:37.477Z","subject":"[The ID verification Company] Identity Verification Required","to":"Tanveer@trinetra.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 13:27:36"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: Tanveer@trinetra.com","timestamp":"2025-12-05 13:27:36"}
+{"level":"info","message":"Partner ussols@gmail.com requested verification for Tanveer@trinetra.com","timestamp":"2025-12-05 13:27:36"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/5281720b-a899-4766-97ef-03304b5d0c98/documents/DRIVERS_LICENSE-1764959345637-ontaio-can2-1.png","timestamp":"2025-12-05 13:29:06"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/5281720b-a899-4766-97ef-03304b5d0c98/selfies/selfie-1764959355338-selfie.jpg","timestamp":"2025-12-05 13:29:15"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-05 13:29:16"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-05 13:29:16"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 13:29:16"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 13:29:17"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T18:29:18.632Z","subject":"[The ID verification Company] Verification PASSED - Jeremy Power","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 13:29:17"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-05 13:29:17"}
+{"level":"info","message":"[PartnerService] Resending email for verification: 3006417a-5cd2-4ca3-86e1-7d58844ac804","timestamp":"2025-12-05 13:30:08"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-05 13:30:08"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T18:30:10.789Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 13:30:09"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-05 13:30:09"}
+{"level":"info","message":"Partner ussols@gmail.com resent email for verification 3006417a-5cd2-4ca3-86e1-7d58844ac804","timestamp":"2025-12-05 13:30:09"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/3006417a-5cd2-4ca3-86e1-7d58844ac804/documents/DRIVERS_LICENSE-1764959435261-passport-data-page-large.jpg","timestamp":"2025-12-05 13:30:35"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/3006417a-5cd2-4ca3-86e1-7d58844ac804/selfies/selfie-1764959444205-selfie.jpg","timestamp":"2025-12-05 13:30:44"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-05 13:30:45"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-05 13:30:45"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-05T18:30:46.974Z","subject":"[The ID verification Company] Verification PASSED - Malik KHan","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 13:30:45"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-05 13:30:45"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 13:34:53"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 13:34:54"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 13:34:54"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-05 13:36:57"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-05 13:36:58"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-05 13:36:58"}
+{"clientVersion":"5.7.1","level":"error","message":"Login error: \nInvalid `prisma.user.findUnique()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\auth.service.ts:70:36\n\n  67 }\n  68 \n  69 async login(username: string, password: string): Promise<string | null> {\n→ 70   const user = await prisma.user.findUnique({\n         where: {\n           username: \"newuser\",\n           ~~~~~~~~\n       ?   id?: String,\n       ?   email?: String,\n       ?   AND?: UserWhereInput | UserWhereInput[],\n       ?   OR?: UserWhereInput[],\n       ?   NOT?: UserWhereInput | UserWhereInput[],\n       ?   fullName?: StringNullableFilter | String | Null,\n       ?   phone?: StringNullableFilter | String | Null,\n       ?   createdAt?: DateTimeFilter | DateTime,\n       ?   updatedAt?: DateTimeFilter | DateTime,\n       ?   verifications?: VerificationListRelationFilter\n         }\n       })\n\nUnknown argument `username`. Available options are marked with ?.","name":"PrismaClientValidationError","stack":"PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\auth.service.ts:70:36\n\n  67 }\n  68 \n  69 async login(username: string, password: string): Promise<string | null> {\n→ 70   const user = await prisma.user.findUnique({\n         where: {\n           username: \"newuser\",\n           ~~~~~~~~\n       ?   id?: String,\n       ?   email?: String,\n       ?   AND?: UserWhereInput | UserWhereInput[],\n       ?   OR?: UserWhereInput[],\n       ?   NOT?: UserWhereInput | UserWhereInput[],\n       ?   fullName?: StringNullableFilter | String | Null,\n       ?   phone?: StringNullableFilter | String | Null,\n       ?   createdAt?: DateTimeFilter | DateTime,\n       ?   updatedAt?: DateTimeFilter | DateTime,\n       ?   verifications?: VerificationListRelationFilter\n         }\n       })\n\nUnknown argument `username`. Available options are marked with ?.\n    at ti (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:118:5888)\n    at si.handleRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6473)\n    at si.handleAndLogRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6151)\n    at si.request (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:5859)\n    at async l (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:130:10025)\n    at AuthService.login (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\auth.service.ts:70:18)\n    at AuthController.login (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\auth.controller.ts:104:21)","timestamp":"2025-12-05 13:50:52"}
+{"clientVersion":"5.7.1","level":"error","message":"Login error: \nInvalid `prisma.user.findUnique()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\auth.service.ts:70:36\n\n  67 }\n  68 \n  69 async login(username: string, password: string): Promise<string | null> {\n→ 70   const user = await prisma.user.findUnique({\n         where: {\n           username: \"admin\",\n           ~~~~~~~~\n       ?   id?: String,\n       ?   email?: String,\n       ?   AND?: UserWhereInput | UserWhereInput[],\n       ?   OR?: UserWhereInput[],\n       ?   NOT?: UserWhereInput | UserWhereInput[],\n       ?   fullName?: StringNullableFilter | String | Null,\n       ?   phone?: StringNullableFilter | String | Null,\n       ?   createdAt?: DateTimeFilter | DateTime,\n       ?   updatedAt?: DateTimeFilter | DateTime,\n       ?   verifications?: VerificationListRelationFilter\n         }\n       })\n\nUnknown argument `username`. Available options are marked with ?.","name":"PrismaClientValidationError","stack":"PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation in\nc:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\auth.service.ts:70:36\n\n  67 }\n  68 \n  69 async login(username: string, password: string): Promise<string | null> {\n→ 70   const user = await prisma.user.findUnique({\n         where: {\n           username: \"admin\",\n           ~~~~~~~~\n       ?   id?: String,\n       ?   email?: String,\n       ?   AND?: UserWhereInput | UserWhereInput[],\n       ?   OR?: UserWhereInput[],\n       ?   NOT?: UserWhereInput | UserWhereInput[],\n       ?   fullName?: StringNullableFilter | String | Null,\n       ?   phone?: StringNullableFilter | String | Null,\n       ?   createdAt?: DateTimeFilter | DateTime,\n       ?   updatedAt?: DateTimeFilter | DateTime,\n       ?   verifications?: VerificationListRelationFilter\n         }\n       })\n\nUnknown argument `username`. Available options are marked with ?.\n    at ti (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:118:5888)\n    at si.handleRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6473)\n    at si.handleAndLogRequestError (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:6151)\n    at si.request (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:125:5859)\n    at async l (C:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\node_modules\\@prisma\\client\\runtime\\library.js:130:10025)\n    at AuthService.login (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\services\\auth.service.ts:70:18)\n    at AuthController.login (c:\\Ultrasoft\\ultrareach.dev\\id-verify-api\\src\\controllers\\auth.controller.ts:104:21)","timestamp":"2025-12-05 13:51:04"}
+{"level":"info","message":"Partner logged in: ussols@gmail.com","timestamp":"2025-12-05 23:40:11"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-05 23:40:50"}
+{"companyName":"ultrasoft solutions Inc","email":"ussols@gmail.com","id":"a141dbd8-3c85-4e37-9e33-cf8206f3d9be","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[PartnerController] Partner ID: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-05 23:40:50","type":"IDENTITY","userEmail":"tanveer@trihealthnet.com","userName":"Muhammad Asim","userPhone":"4167776667"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[PartnerService] Partner found: ussols@gmail.com","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[PartnerService] Creating new user: tanveer@trihealthnet.com","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[PartnerService] User created with ID: c54493a6-5579-4edb-8b05-03a8e028c95c","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 6a42720c-56d4-4479-a1b5-713772f27464","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveer@trihealthnet.com","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[EmailService] Sending email to tanveer@trihealthnet.com","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 23:40:50"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 23:40:54"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T04:40:54.555Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveer@trihealthnet.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 23:40:54"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveer@trihealthnet.com","timestamp":"2025-12-05 23:40:54"}
+{"level":"info","message":"Partner ussols@gmail.com requested verification for tanveer@trihealthnet.com","timestamp":"2025-12-05 23:40:54"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/6a42720c-56d4-4479-a1b5-713772f27464/documents/DRIVERS_LICENSE-1764996153198-Driver's Licence.png","timestamp":"2025-12-05 23:42:34"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/6a42720c-56d4-4479-a1b5-713772f27464/selfies/selfie-1764996190162-selfie.jpg","timestamp":"2025-12-05 23:43:10"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-05 23:43:11"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-05 23:43:11"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-05 23:43:11"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-05 23:43:11"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T04:43:11.882Z","subject":"[The ID verification Company] Verification PASSED - Muhammad Asim","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-05 23:43:11"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-05 23:43:11"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 00:04:27"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 00:04:29"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 00:04:29"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 00:05:31"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 00:05:31"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 00:05:31"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-06 00:09:15"}
+{"companyName":"ultrasoft solutions Inc","email":"ussols@gmail.com","id":"a141dbd8-3c85-4e37-9e33-cf8206f3d9be","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-06 00:09:15"}
+{"level":"info","message":"[PartnerController] Partner ID: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-06 00:09:15"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-06 00:09:15","type":"IDENTITY","userEmail":"tanveer@trihealthnet.com","userName":"Muhammad Asim","userPhone":"112121212121"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-06 00:09:15"}
+{"level":"info","message":"[PartnerService] Partner found: ussols@gmail.com","timestamp":"2025-12-06 00:09:15"}
+{"level":"info","message":"[PartnerService] User already exists: c54493a6-5579-4edb-8b05-03a8e028c95c, updating info","timestamp":"2025-12-06 00:09:15"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 7a30a3f5-c316-43d4-9f9a-c4f772060b6e","timestamp":"2025-12-06 00:09:15"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveer@trihealthnet.com","timestamp":"2025-12-06 00:09:15"}
+{"level":"info","message":"[EmailService] Sending email to tanveer@trihealthnet.com","timestamp":"2025-12-06 00:09:15"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 00:09:15"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 00:09:18"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T05:09:19.057Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveer@trihealthnet.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 00:09:19"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveer@trihealthnet.com","timestamp":"2025-12-06 00:09:19"}
+{"level":"info","message":"Partner ussols@gmail.com requested verification for tanveer@trihealthnet.com","timestamp":"2025-12-06 00:09:19"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 00:10:07"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 00:10:07"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 00:10:07"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/7a30a3f5-c316-43d4-9f9a-c4f772060b6e/documents/DRIVERS_LICENSE-1764997896476-abdullah_passport.jpg","timestamp":"2025-12-06 00:11:37"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/7a30a3f5-c316-43d4-9f9a-c4f772060b6e/selfies/selfie-1764997907432-selfie.jpg","timestamp":"2025-12-06 00:11:47"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-06 00:11:48"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-06 00:11:48"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 00:11:48"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 00:11:49"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T05:11:49.383Z","subject":"[The ID verification Company] Verification PASSED - Muhammad Asim","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 00:11:49"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 00:11:49"}
+{"level":"info","message":"Partner logged in: ussols@gmail.com","timestamp":"2025-12-06 00:40:27"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 00:40:53"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 00:40:53"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 00:40:53"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 00:48:27"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 00:48:28"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 00:48:28"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 00:48:36"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 00:48:36"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 00:48:36"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 00:51:08"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 00:51:08"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 00:51:08"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 00:51:42"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 00:51:43"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 00:51:43"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 00:53:04"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 00:53:04"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 00:53:04"}
+{"level":"info","message":"[PartnerService] Resending email for verification: 77f49a4d-6f14-4ad8-bd83-7e00dcb38b05","timestamp":"2025-12-06 00:53:44"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 00:53:44"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 00:53:44"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 00:53:47"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T05:53:47.375Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 00:53:47"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-06 00:53:47"}
+{"level":"info","message":"Partner ussols@gmail.com resent email for verification 77f49a4d-6f14-4ad8-bd83-7e00dcb38b05","timestamp":"2025-12-06 00:53:47"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/77f49a4d-6f14-4ad8-bd83-7e00dcb38b05/documents/PASSPORT-1765000462370-passport-data-page-large.jpg","timestamp":"2025-12-06 00:54:22"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/77f49a4d-6f14-4ad8-bd83-7e00dcb38b05/selfies/selfie-1765000473702-selfie.jpg","timestamp":"2025-12-06 00:54:34"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-06 00:54:35"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-06 00:54:35"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 00:54:35"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 00:54:35"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T05:54:36.121Z","subject":"[The ID verification Company] Verification PASSED - Malik KHan","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 00:54:36"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 00:54:36"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:32:54"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:32:56"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:32:56"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:33:09"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:33:10"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:33:10"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:38:59"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:39:00"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:39:00"}
+{"level":"info","message":"[PartnerService] Resending email for verification: de0db6b5-2c08-4b22-a9dd-3b2241b1ca5f","timestamp":"2025-12-06 17:39:21"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-06 17:39:21"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 17:39:21"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 17:39:24"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T22:39:25.908Z","subject":"[The ID verification Company] Identity Verification Required","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 17:39:25"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: ussols@gmail.com","timestamp":"2025-12-06 17:39:25"}
+{"level":"info","message":"Partner ussols@gmail.com resent email for verification de0db6b5-2c08-4b22-a9dd-3b2241b1ca5f","timestamp":"2025-12-06 17:39:25"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-06 17:42:41"}
+{"companyName":"ultrasoft solutions Inc","email":"ussols@gmail.com","id":"a141dbd8-3c85-4e37-9e33-cf8206f3d9be","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"[PartnerController] Partner ID: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-06 17:42:41","type":"IDENTITY","userEmail":"tanveerafzal@gmail.com","userName":"Bolo","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"[PartnerService] Partner found: ussols@gmail.com","timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"[PartnerService] User already exists: 8306492c-0241-4acc-aff5-a69839141eed, updating info","timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 862703ed-d840-4e92-8d92-e81476a982fe","timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveerafzal@gmail.com","timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 17:42:41"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T22:42:42.340Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"Partner ussols@gmail.com requested verification for tanveerafzal@gmail.com","timestamp":"2025-12-06 17:42:41"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/862703ed-d840-4e92-8d92-e81476a982fe/documents/DRIVERS_LICENSE-1765060983292-abdullah_passport.jpg","timestamp":"2025-12-06 17:43:03"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/862703ed-d840-4e92-8d92-e81476a982fe/selfies/selfie-1765060994057-selfie.jpg","timestamp":"2025-12-06 17:43:14"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-06 17:43:15"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-06 17:43:15"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 17:43:15"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 17:43:16"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T22:43:16.849Z","subject":"[The ID verification Company] Verification PASSED - Bolo","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 17:43:16"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 17:43:16"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:49:35"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:49:36"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:49:36"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:49:54"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:49:55"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:49:55"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:50:19"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:50:20"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:50:20"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:50:49"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:50:49"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:50:49"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:51:05"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:51:06"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:51:06"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:53:31"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:53:32"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:53:32"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-06 17:54:05"}
+{"companyName":"ultrasoft solutions Inc","email":"ussols@gmail.com","id":"a141dbd8-3c85-4e37-9e33-cf8206f3d9be","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-06 17:54:05"}
+{"level":"info","message":"[PartnerController] Partner ID: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-06 17:54:05"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-06 17:54:05","type":"IDENTITY","userEmail":"tanveerafzal@gmail.com","userName":"Malik KHan","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-06 17:54:05"}
+{"level":"info","message":"[PartnerService] Partner found: ussols@gmail.com","timestamp":"2025-12-06 17:54:05"}
+{"level":"info","message":"[PartnerService] User already exists: 8306492c-0241-4acc-aff5-a69839141eed, updating info","timestamp":"2025-12-06 17:54:05"}
+{"level":"info","message":"[PartnerService] Verification created with ID: c735dd09-24e0-4961-ab20-4dc85db6419d","timestamp":"2025-12-06 17:54:05"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveerafzal@gmail.com","timestamp":"2025-12-06 17:54:05"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 17:54:05"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 17:54:05"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 17:54:08"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T22:54:09.476Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 17:54:08"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-06 17:54:08"}
+{"level":"info","message":"Partner ussols@gmail.com requested verification for tanveerafzal@gmail.com","timestamp":"2025-12-06 17:54:09"}
+{"level":"info","message":"[PartnerService] Resending email for verification: c735dd09-24e0-4961-ab20-4dc85db6419d","timestamp":"2025-12-06 17:54:13"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 17:54:13"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T22:54:14.484Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 17:54:14"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-06 17:54:14"}
+{"level":"info","message":"Partner ussols@gmail.com resent email for verification c735dd09-24e0-4961-ab20-4dc85db6419d","timestamp":"2025-12-06 17:54:14"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/de0db6b5-2c08-4b22-a9dd-3b2241b1ca5f/documents/DRIVERS_LICENSE-1765061675622-abdullah_passport.jpg","timestamp":"2025-12-06 17:54:36"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/de0db6b5-2c08-4b22-a9dd-3b2241b1ca5f/selfies/selfie-1765061694642-selfie.jpg","timestamp":"2025-12-06 17:54:55"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-06 17:54:56"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-06 17:54:56"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 17:54:56"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 17:54:56"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T22:54:57.384Z","subject":"[The ID verification Company] Verification PASSED - Malik KHan","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 17:54:56"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 17:54:56"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:59:33"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:59:34"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:59:34"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 17:59:49"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 17:59:50"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 17:59:50"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:00:04"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:00:04"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:00:04"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:01:00"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:01:01"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:01:01"}
+{"level":"info","message":"[PartnerService] Resending email for verification: c735dd09-24e0-4961-ab20-4dc85db6419d","timestamp":"2025-12-06 18:01:16"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 18:01:16"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 18:01:16"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 18:01:19"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T23:01:20.631Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 18:01:20"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-06 18:01:20"}
+{"level":"info","message":"Partner ussols@gmail.com resent email for verification c735dd09-24e0-4961-ab20-4dc85db6419d","timestamp":"2025-12-06 18:01:20"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/c735dd09-24e0-4961-ab20-4dc85db6419d/documents/DRIVERS_LICENSE-1765062139207-abdullah_passport.jpg","timestamp":"2025-12-06 18:02:19"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/c735dd09-24e0-4961-ab20-4dc85db6419d/selfies/selfie-1765062157698-selfie.jpg","timestamp":"2025-12-06 18:02:38"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-06 18:02:41"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-06 18:02:41"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 18:02:41"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 18:02:42"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T23:02:42.918Z","subject":"[The ID verification Company] Verification PASSED - Malik KHan","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 18:02:42"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 18:02:42"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-06 18:08:00"}
+{"companyName":"ultrasoft solutions Inc","email":"ussols@gmail.com","id":"a141dbd8-3c85-4e37-9e33-cf8206f3d9be","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-06 18:08:00"}
+{"level":"info","message":"[PartnerController] Partner ID: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-06 18:08:00"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-06 18:08:00","type":"IDENTITY","userEmail":"tanveerafzal@gmail.com","userName":"Malik KHan","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: a141dbd8-3c85-4e37-9e33-cf8206f3d9be","timestamp":"2025-12-06 18:08:00"}
+{"level":"info","message":"[PartnerService] Partner found: ussols@gmail.com","timestamp":"2025-12-06 18:08:00"}
+{"level":"info","message":"[PartnerService] User already exists: 8306492c-0241-4acc-aff5-a69839141eed, updating info","timestamp":"2025-12-06 18:08:00"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 45d9792a-7ab5-4b8c-92a8-7dfb36550471","timestamp":"2025-12-06 18:08:00"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveerafzal@gmail.com","timestamp":"2025-12-06 18:08:00"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 18:08:00"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T23:08:01.800Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 18:08:01"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-06 18:08:01"}
+{"level":"info","message":"Partner ussols@gmail.com requested verification for tanveerafzal@gmail.com","timestamp":"2025-12-06 18:08:01"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/45d9792a-7ab5-4b8c-92a8-7dfb36550471/documents/DRIVERS_LICENSE-1765062498535-abdullah_passport.jpg","timestamp":"2025-12-06 18:08:19"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/45d9792a-7ab5-4b8c-92a8-7dfb36550471/selfies/selfie-1765062509607-selfie.jpg","timestamp":"2025-12-06 18:08:29"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-06 18:08:32"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-06 18:08:32"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-06T23:08:32.993Z","subject":"[The ID verification Company] Verification FAILED - Malik KHan","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 18:08:32"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 18:08:32"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:09:01"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:09:02"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:09:02"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:10:05"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:10:06"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:10:06"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:10:33"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:10:34"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:10:34"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:15:28"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:15:29"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:15:29"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/4c354f84-948c-4050-9959-96daf04e6a04/documents/DRIVERS_LICENSE-1765062933614-abdullah_passport.jpg","timestamp":"2025-12-06 18:15:34"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/4c354f84-948c-4050-9959-96daf04e6a04/selfies/selfie-1765062950528-selfie.jpg","timestamp":"2025-12-06 18:15:50"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:18:46"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:18:46"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:18:46"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:18:56"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:18:57"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:18:57"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:25:44"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:25:44"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:25:44"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:26:10"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:26:11"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:26:11"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:26:28"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:26:28"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:26:28"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:30:16"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:30:16"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:30:16"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:30:39"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:30:40"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:30:40"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:31:03"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:31:04"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:31:04"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:31:19"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:31:19"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:31:19"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:32:22"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:32:23"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:32:23"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:32:40"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:32:40"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:32:40"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:32:49"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:32:50"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:32:50"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:33:05"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:33:06"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:33:06"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:34:00"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:34:01"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:34:01"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:34:18"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:34:19"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:34:19"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:34:36"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:34:36"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:34:36"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 18:36:02"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 18:36:03"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 18:36:03"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/45d9792a-7ab5-4b8c-92a8-7dfb36550471/documents/PASSPORT-1765065576784-abdullah_passport.jpg","timestamp":"2025-12-06 18:59:37"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/45d9792a-7ab5-4b8c-92a8-7dfb36550471/selfies/selfie-1765065594005-selfie.jpg","timestamp":"2025-12-06 18:59:54"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: ussols@gmail.com","timestamp":"2025-12-06 18:59:56"}
+{"level":"info","message":"[EmailService] Sending email to ussols@gmail.com","timestamp":"2025-12-06 18:59:56"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 18:59:56"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 18:59:59"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-07T00:00:00.312Z","subject":"[The ID verification Company] Verification FAILED - Malik KHan","to":"ussols@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 18:59:59"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 18:59:59"}
+{"level":"info","message":"[PartnerService] Resending email for verification: dbfa5b18-806c-422a-b089-8132d437eed8","timestamp":"2025-12-06 19:08:51"}
+{"level":"info","message":"[EmailService] Sending email to tanverafzal@gmail.com","timestamp":"2025-12-06 19:08:51"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 19:08:51"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 19:08:54"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-07T00:08:54.906Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanverafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 19:08:54"}
+{"level":"info","message":"[PartnerService] Email resent successfully to: tanverafzal@gmail.com","timestamp":"2025-12-06 19:08:54"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com resent email for verification dbfa5b18-806c-422a-b089-8132d437eed8","timestamp":"2025-12-06 19:08:54"}
+{"level":"info","message":"[PartnerController] Request verification called","timestamp":"2025-12-06 19:10:32"}
+{"companyName":"karahi master","email":"tanveerafzal@gmail.com","id":"5584cef0-d50d-4d43-bfb1-81a6453f076b","level":"info","message":"[PartnerController] req.partner:","timestamp":"2025-12-06 19:10:32"}
+{"level":"info","message":"[PartnerController] Partner ID: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-06 19:10:32"}
+{"level":"info","message":"[PartnerController] Request body:","timestamp":"2025-12-06 19:10:32","type":"IDENTITY","userEmail":"tanveerafzal@gmail.com","userName":"Abdullah Asif","userPhone":"6452223333"}
+{"level":"info","message":"[PartnerService] Requesting verification for partner: 5584cef0-d50d-4d43-bfb1-81a6453f076b","timestamp":"2025-12-06 19:10:32"}
+{"level":"info","message":"[PartnerService] Partner found: tanveerafzal@gmail.com","timestamp":"2025-12-06 19:10:32"}
+{"level":"info","message":"[PartnerService] User already exists: 8306492c-0241-4acc-aff5-a69839141eed, updating info","timestamp":"2025-12-06 19:10:32"}
+{"level":"info","message":"[PartnerService] Verification created with ID: 09318c68-0625-42db-872b-7ee7240036db","timestamp":"2025-12-06 19:10:32"}
+{"level":"info","message":"[PartnerService] Sending verification email to: tanveerafzal@gmail.com","timestamp":"2025-12-06 19:10:32"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 19:10:32"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-07T00:10:33.647Z","subject":"[The ID verification Company] Identity Verification Required","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 19:10:33"}
+{"level":"info","message":"[PartnerService] Email sent successfully to: tanveerafzal@gmail.com","timestamp":"2025-12-06 19:10:33"}
+{"level":"info","message":"Partner tanveerafzal@gmail.com requested verification for tanveerafzal@gmail.com","timestamp":"2025-12-06 19:10:33"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/documents/PASSPORT-1765066286784-abdullah_passport.jpg","timestamp":"2025-12-06 19:11:27"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/selfies/selfie-1765066295226-selfie.jpg","timestamp":"2025-12-06 19:11:35"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-06 19:11:38"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 19:11:38"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-07T00:11:39.689Z","subject":"[The ID verification Company] Verification FAILED - Abdullah Asif","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 19:11:39"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 19:11:39"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/documents/DRIVERS_LICENSE-1765066512253-Driver's Licence.png","timestamp":"2025-12-06 19:15:12"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/selfies/selfie-1765066522362-selfie.jpg","timestamp":"2025-12-06 19:15:22"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-06 19:15:25"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 19:15:25"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-07T00:15:26.321Z","subject":"[The ID verification Company] Verification FAILED - Abdullah Asif","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 19:15:25"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 19:15:25"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/documents/DRIVERS_LICENSE-1765066907738-passport-data-page-large.jpg","timestamp":"2025-12-06 19:21:48"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/selfies/selfie-1765066917657-selfie.jpg","timestamp":"2025-12-06 19:21:57"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-06 19:22:01"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 19:22:01"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-07T00:22:03.123Z","subject":"[The ID verification Company] Verification FAILED - Abdullah Asif","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 19:22:02"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 19:22:02"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 19:23:06"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 19:23:07"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 19:23:07"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 19:23:34"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 19:23:34"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 19:23:34"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 19:25:01"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 19:25:01"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 19:25:01"}
+{"level":"info","message":"[S3Service] AWS S3 initialized - Bucket: id-verify-documents, Region: us-east-1","timestamp":"2025-12-06 19:28:02"}
+{"level":"info","message":"ID Verification Server running on port 3002","timestamp":"2025-12-06 19:28:02"}
+{"level":"info","message":"Environment: development","timestamp":"2025-12-06 19:28:02"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/documents/DRIVERS_LICENSE-1765067309387-ontaio-can2-1.png","timestamp":"2025-12-06 19:28:29"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/selfies/selfie-1765067318070-selfie.jpg","timestamp":"2025-12-06 19:28:38"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-06 19:28:40"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 19:28:40"}
+{"level":"info","message":"[EmailService] Authenticating with Ultrareach360 API","timestamp":"2025-12-06 19:28:40"}
+{"level":"info","message":"[EmailService] Successfully authenticated","timestamp":"2025-12-06 19:28:43"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-07T00:28:44.227Z","subject":"[The ID verification Company] Verification FAILED - Abdullah Asif","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 19:28:43"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 19:28:43"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/documents/DRIVERS_LICENSE-1765067344538-passport-data-page-large.jpg","timestamp":"2025-12-06 19:29:05"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/documents/DRIVERS_LICENSE-1765067349223-passport-data-page-large.jpg","timestamp":"2025-12-06 19:29:10"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/09318c68-0625-42db-872b-7ee7240036db/selfies/selfie-1765067355150-selfie.jpg","timestamp":"2025-12-06 19:29:15"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-06 19:29:18"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 19:29:18"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-07T00:29:19.005Z","subject":"[The ID verification Company] Verification FAILED - Abdullah Asif","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 19:29:18"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 19:29:18"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/dbfa5b18-806c-422a-b089-8132d437eed8/documents/DRIVERS_LICENSE-1765069506580-document.jpg","timestamp":"2025-12-06 20:05:07"}
+{"level":"info","message":"[S3Service] File uploaded successfully: verifications/dbfa5b18-806c-422a-b089-8132d437eed8/selfies/selfie-1765069554312-selfie.jpg","timestamp":"2025-12-06 20:05:54"}
+{"level":"info","message":"[VerificationService] Sending completion email to partner: tanveerafzal@gmail.com","timestamp":"2025-12-06 20:05:57"}
+{"level":"info","message":"[EmailService] Sending email to tanveerafzal@gmail.com","timestamp":"2025-12-06 20:05:57"}
+{"data":{"businessGroup":"The ID verification Company","sentAt":"2025-12-07T01:05:59.177Z","subject":"[The ID verification Company] Verification PASSED - Malik KHan","to":"tanveerafzal@gmail.com"},"level":"info","message":"Email sent successfully","success":true,"timestamp":"2025-12-06 20:05:58"}
+{"level":"info","message":"[VerificationService] Partner notification email sent successfully","timestamp":"2025-12-06 20:05:58"}

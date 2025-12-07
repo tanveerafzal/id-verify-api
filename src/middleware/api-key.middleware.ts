@@ -33,12 +33,13 @@ export const apiKeyMiddleware = async (
         });
 
         if (verificationsThisMonth >= partner.tier.monthlyVerifications) {
-          return res.status(429).json({
+          res.status(429).json({
             success: false,
             error: 'Monthly verification limit reached. Please upgrade your plan.',
             limit: partner.tier.monthlyVerifications,
             used: verificationsThisMonth
           });
+          return;
         }
 
         // Attach partner ID to request

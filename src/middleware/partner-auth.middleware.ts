@@ -13,19 +13,21 @@ export const partnerAuthMiddleware = (
     const token = partnerService.extractTokenFromHeader(req.headers.authorization);
 
     if (!token) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Authentication required. Please provide a valid Bearer token.'
       });
+      return;
     }
 
     const payload = partnerService.verifyToken(token);
 
     if (!payload) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Invalid or expired token'
       });
+      return;
     }
 
     req.partner = {
@@ -36,7 +38,7 @@ export const partnerAuthMiddleware = (
 
     next();
   } catch (error) {
-    return res.status(401).json({
+    res.status(401).json({
       success: false,
       error: 'Authentication failed'
     });

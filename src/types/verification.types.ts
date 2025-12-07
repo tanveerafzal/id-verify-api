@@ -65,6 +65,7 @@ export interface BiometricData {
   faceQuality?: number;
   landmarks?: FaceLandmarks;
   embedding?: number[];
+  googleVisionData?: any; // Full Google Vision face annotation for comparison
 }
 
 export interface FaceLandmarks {
