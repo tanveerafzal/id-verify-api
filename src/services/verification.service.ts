@@ -98,7 +98,7 @@ export class VerificationService {
       throw new Error(`Document quality too low: ${qualityCheck.issues.join(', ')}`);
     }
 
-    // Always auto-detect document type to validate against user selection
+    // Auto-detect document type to validate against user selection
     console.log('[VerificationService] Auto-detecting document type...');
     const detectionResult = await this.documentScanner.detectDocumentType(preprocessed);
     console.log('[VerificationService] Auto-detected document type:', detectionResult.documentType,
@@ -114,8 +114,12 @@ export class VerificationService {
 
       // Check if the detected type matches the user-selected type
       if (detectionResult.documentType !== documentType) {
-        // Only throw error if detection confidence is high enough
-        if (detectionResult.confidence >= 0.7) {
+        // Only throw error if detection is reliable:
+        // - High confidence (>= 0.8)
+        // - Using google_vision method (not keyword_analysis fallback)
+        const isReliableDetection = detectionResult.confidence >= 0.8 && detectionResult.method === 'google_vision';
+
+        if (isReliableDetection) {
           const userTypeName = this.getDocumentTypeName(documentType);
           const detectedTypeName = this.getDocumentTypeName(detectionResult.documentType);
           throw new Error(
@@ -123,8 +127,9 @@ export class VerificationService {
             `Please upload the correct document type or select the appropriate document type.`
           );
         } else {
-          // Low confidence detection - use user's selection but warn
-          console.log('[VerificationService] Low detection confidence, using user-selected type:', documentType);
+          // Low confidence or fallback detection - trust user's selection
+          console.log('[VerificationService] Detection not reliable (confidence:', detectionResult.confidence,
+            ', method:', detectionResult.method, '), using user-selected type:', documentType);
           finalDocumentType = documentType;
         }
       } else {
@@ -751,5 +756,21 @@ export class VerificationService {
         response.on('error', reject);
       }).on('error', reject);
     });
+  }
+
+  /**
+   * Get human-readable document type name
+   */
+  private getDocumentTypeName(docType: DocumentType): string {
+    const names: Record<DocumentType, string> = {
+      [DocumentType.DRIVERS_LICENSE]: "Driver's License",
+      [DocumentType.PASSPORT]: 'Passport',
+      [DocumentType.NATIONAL_ID]: 'National ID Card',
+      [DocumentType.RESIDENCE_PERMIT]: 'Residence Permit',
+      [DocumentType.VOTER_ID]: 'Voter ID',
+      [DocumentType.SELFIE]: 'Selfie',
+      [DocumentType.OTHER]: 'Other Document'
+    };
+    return names[docType] || 'Unknown Document';
   }
 }
