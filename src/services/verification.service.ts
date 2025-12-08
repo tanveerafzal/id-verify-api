@@ -237,7 +237,7 @@ export class VerificationService {
   async performVerification(verificationId: string): Promise<VerificationResult> {
     const verification = await prisma.verification.findUnique({
       where: { id: verificationId },
-      include: { documents: true, results: true }
+      include: { documents: true, results: true, user: true }
     });
 
     if (!verification) {
@@ -256,9 +256,47 @@ export class VerificationService {
 
     const extractedData = this.mergeExtractedData(verification.documents);
 
+    // Name validation - compare requester name with extracted name
+    let nameMatch = false;
+    let nameMatchScore = 0;
+    let nameComparisonDetails: string | null = null;
+
+    if (verification.user?.fullName) {
+      console.log('[VerificationService] Performing name validation...');
+      console.log('  - Requester name:', verification.user.fullName);
+      console.log('  - Extracted name:', extractedData.fullName);
+
+      const nameComparison = this.compareNames(verification.user.fullName, extractedData.fullName);
+      nameMatch = nameComparison.match;
+      nameMatchScore = nameComparison.score;
+      nameComparisonDetails = nameComparison.details;
+
+      console.log('[VerificationService] Name comparison result:');
+      console.log('  - Match:', nameMatch);
+      console.log('  - Score:', nameMatchScore);
+      console.log('  - Details:', nameComparisonDetails);
+
+      if (!nameMatch) {
+        flags.push('NAME_MISMATCH');
+        warnings.push(`Name on document does not match requester name: ${nameComparisonDetails}`);
+      }
+    } else {
+      console.log('[VerificationService] No requester name provided, skipping name validation');
+      warnings.push('Name validation skipped - no requester name provided');
+    }
+
+    // Document expiry validation
     const documentExpired = this.checkDocumentExpiry(extractedData.expiryDate);
     if (documentExpired) {
       flags.push('DOCUMENT_EXPIRED');
+      const expiryDate = extractedData.expiryDate ? new Date(extractedData.expiryDate).toLocaleDateString() : 'unknown';
+      warnings.push(`Document expired on ${expiryDate}`);
+      console.log('[VerificationService] Document is EXPIRED - expiry date:', expiryDate);
+    } else if (extractedData.expiryDate) {
+      console.log('[VerificationService] Document is valid - expiry date:', extractedData.expiryDate);
+    } else {
+      console.log('[VerificationService] No expiry date found on document');
+      warnings.push('Could not verify document expiry - no expiry date found');
     }
 
     const documentTampered = this.detectTampering(verification.documents);
@@ -333,11 +371,16 @@ export class VerificationService {
 
     const riskLevel = this.calculateRiskLevel(flags, documentChecks);
 
-    // Include face match in pass/fail decision
+    // Check if name validation should affect pass/fail
+    // Name mismatch only fails if requester name was provided and doesn't match
+    const nameMismatchFailure = verification.user?.fullName ? !nameMatch : false;
+
+    // Include face match and name match in pass/fail decision
     const passed = flags.length === 0 &&
                    documentChecks.averageQuality >= config.verification.minQualityScore &&
                    !documentExpired &&
-                   !documentTampered;
+                   !documentTampered &&
+                   !nameMismatchFailure;
 
     const result: VerificationResult = {
       passed,
@@ -348,7 +391,9 @@ export class VerificationService {
         documentExpired,
         documentTampered,
         faceMatch,
-        faceMatchScore
+        faceMatchScore,
+        nameMatch,
+        nameMatchScore
       },
       extractedData,
       flags,
@@ -370,13 +415,17 @@ export class VerificationService {
 
     console.log('[VerificationService] Creating verification result:');
     console.log('  - extractedName:', extractedData.fullName);
+    console.log('  - expectedName:', verification.user?.fullName || 'not provided');
+    console.log('  - nameMatch:', nameMatch, '(score:', nameMatchScore, ')');
     console.log('  - extractedDob:', extractedData.dateOfBirth);
     console.log('  - documentNumber:', extractedData.documentNumber);
     console.log('  - expiryDate:', extractedData.expiryDate);
+    console.log('  - documentExpired:', documentExpired);
     console.log('  - issuingCountry:', extractedData.issuingCountry);
     console.log('  - address:', addressString);
     console.log('  - faceMatch:', faceMatch);
     console.log('  - faceMatchScore:', faceMatchScore);
+    console.log('  - passed:', passed);
 
     // Use upsert to handle both new and retry scenarios
     await prisma.verificationResult.upsert({
@@ -385,6 +434,7 @@ export class VerificationService {
         passed,
         score: result.score,
         riskLevel,
+        nameMatch,
         documentAuthentic: result.checks.documentAuthentic,
         documentExpired: result.checks.documentExpired,
         documentTampered: result.checks.documentTampered,
@@ -406,6 +456,7 @@ export class VerificationService {
         passed,
         score: result.score,
         riskLevel,
+        nameMatch,
         documentAuthentic: result.checks.documentAuthentic,
         documentExpired: result.checks.documentExpired,
         documentTampered: result.checks.documentTampered,
@@ -527,8 +578,105 @@ export class VerificationService {
 
     const expiry = new Date(expiryDate);
     const today = new Date();
+    // Set time to start of day for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+    expiry.setHours(0, 0, 0, 0);
 
     return expiry < today;
+  }
+
+  /**
+   * Compare two names with fuzzy matching
+   * Returns a score between 0 and 1 (1 = exact match)
+   */
+  private compareNames(expectedName: string | null | undefined, extractedName: string | null | undefined): { match: boolean; score: number; details: string } {
+    if (!expectedName || !extractedName) {
+      return { match: false, score: 0, details: 'One or both names are missing' };
+    }
+
+    // Normalize names: lowercase, remove extra spaces, remove special characters
+    const normalize = (name: string): string => {
+      return name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z\s]/g, '') // Remove non-alpha characters except spaces
+        .replace(/\s+/g, ' ');    // Normalize multiple spaces to single space
+    };
+
+    const expected = normalize(expectedName);
+    const extracted = normalize(extractedName);
+
+    // Exact match after normalization
+    if (expected === extracted) {
+      return { match: true, score: 1.0, details: 'Exact match' };
+    }
+
+    // Split into parts and check if all parts of one exist in the other
+    const expectedParts = expected.split(' ').filter(p => p.length > 0);
+    const extractedParts = extracted.split(' ').filter(p => p.length > 0);
+
+    // Check if all expected name parts exist in extracted (handles name order differences)
+    const allExpectedInExtracted = expectedParts.every(part =>
+      extractedParts.some(ep => ep === part || this.levenshteinDistance(part, ep) <= 1)
+    );
+
+    const allExtractedInExpected = extractedParts.every(part =>
+      expectedParts.some(ep => ep === part || this.levenshteinDistance(part, ep) <= 1)
+    );
+
+    if (allExpectedInExtracted && allExtractedInExpected) {
+      return { match: true, score: 0.95, details: 'Name parts match (different order or minor typos)' };
+    }
+
+    if (allExpectedInExtracted || allExtractedInExpected) {
+      return { match: true, score: 0.85, details: 'Partial name match (one contains all parts of the other)' };
+    }
+
+    // Calculate similarity score using Levenshtein distance
+    const distance = this.levenshteinDistance(expected, extracted);
+    const maxLength = Math.max(expected.length, extracted.length);
+    const similarity = 1 - (distance / maxLength);
+
+    // Consider it a match if similarity is above 0.8 (allows for minor OCR errors)
+    const isMatch = similarity >= 0.8;
+
+    return {
+      match: isMatch,
+      score: similarity,
+      details: isMatch ? `Similar names (${(similarity * 100).toFixed(1)}% match)` : `Names differ significantly (${(similarity * 100).toFixed(1)}% similarity)`
+    };
+  }
+
+  /**
+   * Calculate Levenshtein distance between two strings
+   */
+  private levenshteinDistance(str1: string, str2: string): number {
+    const m = str1.length;
+    const n = str2.length;
+
+    // Create a 2D array to store distances
+    const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+
+    // Initialize base cases
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+    // Fill in the rest of the matrix
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        if (str1[i - 1] === str2[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1];
+        } else {
+          dp[i][j] = 1 + Math.min(
+            dp[i - 1][j],     // deletion
+            dp[i][j - 1],     // insertion
+            dp[i - 1][j - 1]  // substitution
+          );
+        }
+      }
+    }
+
+    return dp[m][n];
   }
 
   private detectTampering(documents: any[]): boolean {
@@ -551,6 +699,10 @@ export class VerificationService {
     }
 
     if (flags.includes('FACE_MISMATCH')) {
+      return RiskLevel.CRITICAL;
+    }
+
+    if (flags.includes('NAME_MISMATCH')) {
       return RiskLevel.CRITICAL;
     }
 

@@ -18,6 +18,7 @@
     "@aws-sdk/client-s3": "^3.943.0",
     "@aws-sdk/lib-storage": "^3.943.0",
     "@aws-sdk/s3-request-presigner": "^3.943.0",
+    "@google-cloud/documentai": "^9.5.0",
     "@google-cloud/vision": "^5.3.4",
     "@prisma/client": "5.7.1",
     "axios": "^1.6.2",

@@ -34,7 +34,20 @@ export const config = {
 
   googleCloud: {
     projectId: process.env.GOOGLE_CLOUD_PROJECT || '',
-    credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS || ''
+    credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS || '',
+    location: process.env.GOOGLE_CLOUD_LOCATION || 'us',
+    documentAi: {
+      // US Processors (built-in)
+      usDriversLicenseProcessorId: process.env.DOCAI_US_DRIVERS_LICENSE_PROCESSOR_ID || '',
+      usPassportProcessorId: process.env.DOCAI_US_PASSPORT_PROCESSOR_ID || '',
+      // Canadian Custom Extractors
+      caDriversLicenseProcessorId: process.env.DOCAI_CA_DRIVERS_LICENSE_PROCESSOR_ID || '',
+      caPassportProcessorId: process.env.DOCAI_CA_PASSPORT_PROCESSOR_ID || '',
+      // Generic ID Processor (fallback for other countries)
+      genericIdProcessorId: process.env.DOCAI_GENERIC_ID_PROCESSOR_ID || '',
+      // ID Proofing (fraud detection)
+      idProofingProcessorId: process.env.DOCAI_ID_PROOFING_PROCESSOR_ID || ''
+    }
   },
 
   ultrareach360: {

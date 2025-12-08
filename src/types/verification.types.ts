@@ -101,6 +101,8 @@ export interface VerificationResult {
     documentTampered: boolean;
     faceMatch?: boolean;
     faceMatchScore?: number;
+    nameMatch?: boolean;
+    nameMatchScore?: number;
     livenessCheck?: boolean;
     livenessScore?: number;
   };

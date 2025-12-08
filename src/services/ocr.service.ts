@@ -1,34 +1,140 @@
 import Tesseract from 'tesseract.js';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
+import { DocumentProcessorServiceClient } from '@google-cloud/documentai';
 import { DocumentType, ExtractedDocumentData } from '../types/verification.types';
+import { config } from '../config';
+
+// Entity name mappings for different processor types
+// Custom extractors may use different field names than built-in processors
+const ENTITY_MAPPINGS: Record<string, keyof ExtractedDocumentData | 'skip'> = {
+  // Standard Document AI field names (US processors)
+  'family_name': 'lastName',
+  'familyname': 'lastName',
+  'family name': 'lastName',
+  'given_names': 'firstName',
+  'givennames': 'firstName',
+  'given names': 'firstName',
+  'given_name': 'firstName',
+  'document_id': 'documentNumber',
+  'documentid': 'documentNumber',
+  'document id': 'documentNumber',
+  'date_of_birth': 'dateOfBirth',
+  'dateofbirth': 'dateOfBirth',
+  'date of birth': 'dateOfBirth',
+  'expiration_date': 'expiryDate',
+  'expirationdate': 'expiryDate',
+  'expiration date': 'expiryDate',
+  'expiry_date': 'expiryDate',
+  'issue_date': 'issueDate',
+  'issuedate': 'issueDate',
+  'issue date': 'issueDate',
+  'address': 'address',
+  'mrz_code': 'mrz',
+  'mrzcode': 'mrz',
+  'mrz code': 'mrz',
+  'sex': 'gender',
+  'gender': 'gender',
+  'nationality': 'nationality',
+
+  // Canadian custom extractor field names (suggested schema)
+  'last_name': 'lastName',
+  'lastname': 'lastName',
+  'surname': 'lastName',
+  'first_name': 'firstName',
+  'firstname': 'firstName',
+  'middle_name': 'skip', // We don't have a middle name field
+  'license_number': 'documentNumber',
+  'licensenumber': 'documentNumber',
+  'licence_number': 'documentNumber', // Canadian spelling
+  'licencenumber': 'documentNumber',
+  'passport_number': 'documentNumber',
+  'passportnumber': 'documentNumber',
+  'dob': 'dateOfBirth',
+  'birth_date': 'dateOfBirth',
+  'birthdate': 'dateOfBirth',
+  'exp_date': 'expiryDate',
+  'expiry': 'expiryDate',
+  'iss_date': 'issueDate',
+  'issue': 'issueDate',
+  'street_address': 'address',
+  'full_address': 'address',
+  'province': 'skip', // Handled separately in address parsing
+  'city': 'skip',
+  'postal_code': 'skip',
+  'class': 'skip', // License class
+  'restrictions': 'skip',
+  'endorsements': 'skip',
+  'height': 'skip',
+  'weight': 'skip',
+  'eye_color': 'skip',
+  'hair_color': 'skip',
+  'photo': 'skip',
+  'portrait': 'skip',
+  'signature': 'skip'
+};
 
 export class OCRService {
   private worker: Tesseract.Worker | null = null;
   private visionClient: ImageAnnotatorClient | null = null;
+  private documentAiClient: DocumentProcessorServiceClient | null = null;
   private useGoogleVision: boolean = false;
+  private useDocumentAi: boolean = false;
 
   constructor() {
-    this.initializeGoogleVision();
+    this.initializeGoogleServices();
   }
 
-  private initializeGoogleVision(): void {
+  private initializeGoogleServices(): void {
     try {
       // Check if Google Cloud credentials are configured
       if (process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_CLOUD_PROJECT) {
+        // Initialize Vision API (for face detection and fallback OCR)
         this.visionClient = new ImageAnnotatorClient();
         this.useGoogleVision = true;
         console.log('[OCRService] Google Cloud Vision API initialized');
+
+        // Initialize Document AI if any processor IDs are configured
+        const docAiConfig = config.googleCloud.documentAi;
+        const hasDocAiProcessors =
+          docAiConfig.usDriversLicenseProcessorId ||
+          docAiConfig.usPassportProcessorId ||
+          docAiConfig.caDriversLicenseProcessorId ||
+          docAiConfig.caPassportProcessorId ||
+          docAiConfig.genericIdProcessorId;
+
+        if (hasDocAiProcessors) {
+          this.documentAiClient = new DocumentProcessorServiceClient();
+          this.useDocumentAi = true;
+          console.log('[OCRService] Google Document AI initialized');
+
+          // Log which processors are configured
+          if (docAiConfig.caDriversLicenseProcessorId) {
+            console.log('[OCRService] Canadian Driver License processor configured');
+          }
+          if (docAiConfig.caPassportProcessorId) {
+            console.log('[OCRService] Canadian Passport processor configured');
+          }
+          if (docAiConfig.usDriversLicenseProcessorId) {
+            console.log('[OCRService] US Driver License processor configured');
+          }
+          if (docAiConfig.usPassportProcessorId) {
+            console.log('[OCRService] US Passport processor configured');
+          }
+        } else {
+          console.log('[OCRService] Document AI processor IDs not configured, using Vision API for OCR');
+        }
       } else {
-        console.log('[OCRService] Google Cloud Vision credentials not found, using Tesseract.js');
+        console.log('[OCRService] Google Cloud credentials not found, using Tesseract.js');
       }
     } catch (error) {
-      console.log('[OCRService] Failed to initialize Google Vision, falling back to Tesseract:', error);
+      console.log('[OCRService] Failed to initialize Google services, falling back to Tesseract:', error);
       this.useGoogleVision = false;
+      this.useDocumentAi = false;
     }
   }
 
   async initialize(): Promise<void> {
-    if (!this.useGoogleVision) {
+    if (!this.useGoogleVision && !this.useDocumentAi) {
       this.worker = await Tesseract.createWorker('eng');
     }
   }
@@ -49,27 +155,25 @@ export class OCRService {
 
   private async extractTextWithGoogleVision(imageBuffer: Buffer): Promise<{ text: string; confidence: number }> {
     try {
-      const [result] = await this.visionClient!.textDetection({
+      // Use documentTextDetection for better structured document OCR
+      const [result] = await this.visionClient!.documentTextDetection({
         image: { content: imageBuffer.toString('base64') }
       });
 
-      const detections = result.textAnnotations;
+      const fullTextAnnotation = result.fullTextAnnotation;
 
-      if (!detections || detections.length === 0) {
+      if (!fullTextAnnotation || !fullTextAnnotation.text) {
         console.log('[OCRService] Google Vision: No text detected, falling back to Tesseract');
         return this.extractTextWithTesseract(imageBuffer);
       }
 
-      // First annotation contains the entire extracted text
-      const fullText = detections[0].description || '';
+      const fullText = fullTextAnnotation.text;
 
-      // Google Vision doesn't provide a direct confidence score for the whole text
-      // We calculate an average from individual word confidences if available
-      let confidence = 0.95; // Default high confidence for Google Vision
-
-      if (result.fullTextAnnotation?.pages) {
+      // Calculate average confidence from blocks
+      let confidence = 0.95;
+      if (fullTextAnnotation.pages) {
         const confidences: number[] = [];
-        for (const page of result.fullTextAnnotation.pages) {
+        for (const page of fullTextAnnotation.pages) {
           for (const block of page.blocks || []) {
             if (block.confidence) {
               confidences.push(block.confidence);
@@ -112,11 +216,28 @@ export class OCRService {
     imageBuffer: Buffer,
     documentType: DocumentType
   ): Promise<ExtractedDocumentData> {
+    console.log('[OCRService] Extracting document data for type:', documentType);
+
+    // Try Document AI first if configured and document type is supported
+    if (this.useDocumentAi && this.documentAiClient) {
+      const processorId = this.getProcessorIdForDocumentType(documentType);
+
+      if (processorId) {
+        try {
+          console.log('[OCRService] Using Document AI for extraction');
+          return await this.extractWithDocumentAi(imageBuffer, documentType, processorId);
+        } catch (error) {
+          console.error('[OCRService] Document AI extraction failed, falling back to Vision API:', error);
+        }
+      }
+    }
+
+    // Fallback to Vision API + regex parsing
+    console.log('[OCRService] Using Vision API + regex parsing for extraction');
     const { text, confidence } = await this.extractText(imageBuffer);
 
-    console.log('[OCRService] Extracted text:', text.substring(0, 200));
+    console.log('[OCRService] Extracted text:', text.substring(0, 500));
     console.log('[OCRService] Confidence:', confidence);
-    console.log('[OCRService] Document type:', documentType);
 
     let extractedData: ExtractedDocumentData;
 
@@ -137,6 +258,193 @@ export class OCRService {
     console.log('[OCRService] Parsed extracted data:', extractedData);
 
     return extractedData;
+  }
+
+  private getProcessorIdForDocumentType(documentType: DocumentType): string | null {
+    const docAiConfig = config.googleCloud.documentAi;
+
+    switch (documentType) {
+      case DocumentType.DRIVERS_LICENSE:
+        // Prefer Canadian processor, fall back to US, then generic
+        return docAiConfig.caDriversLicenseProcessorId ||
+               docAiConfig.usDriversLicenseProcessorId ||
+               docAiConfig.genericIdProcessorId ||
+               null;
+
+      case DocumentType.PASSPORT:
+        // Prefer Canadian processor, fall back to US, then generic
+        return docAiConfig.caPassportProcessorId ||
+               docAiConfig.usPassportProcessorId ||
+               docAiConfig.genericIdProcessorId ||
+               null;
+
+      case DocumentType.NATIONAL_ID:
+      case DocumentType.RESIDENCE_PERMIT:
+      case DocumentType.VOTER_ID:
+        // Use generic processor for other ID types
+        return docAiConfig.genericIdProcessorId || null;
+
+      default:
+        return null;
+    }
+  }
+
+  private async extractWithDocumentAi(
+    imageBuffer: Buffer,
+    _documentType: DocumentType,
+    processorId: string
+  ): Promise<ExtractedDocumentData> {
+    const projectId = config.googleCloud.projectId;
+    const location = config.googleCloud.location || 'us';
+
+    const processorName = `projects/${projectId}/locations/${location}/processors/${processorId}`;
+
+    console.log('[OCRService] Document AI processor:', processorName);
+
+    const request = {
+      name: processorName,
+      rawDocument: {
+        content: imageBuffer.toString('base64'),
+        mimeType: 'image/jpeg'
+      }
+    };
+
+    const [result] = await this.documentAiClient!.processDocument(request);
+    const { document } = result;
+
+    if (!document || !document.entities) {
+      throw new Error('Document AI returned no entities');
+    }
+
+    console.log('[OCRService] Document AI entities found:', document.entities.length);
+
+    // Map Document AI entities to our ExtractedDocumentData format
+    const extractedData: ExtractedDocumentData = {
+      confidence: 0.95 // Document AI is highly accurate
+    };
+
+    // Temporary storage for address components
+    const addressComponents: {
+      street?: string;
+      city?: string;
+      province?: string;
+      postalCode?: string;
+    } = {};
+
+    for (const entity of document.entities) {
+      const entityType = entity.type?.toLowerCase().replace(/\s+/g, '_') || '';
+      const mentionText = entity.mentionText || '';
+      const normalizedValue = entity.normalizedValue;
+
+      console.log(`[OCRService] Entity: ${entityType} = ${mentionText}`);
+
+      // Map entity to our field using the mapping table
+      const mappedField = ENTITY_MAPPINGS[entityType];
+
+      if (mappedField === 'skip') {
+        // Handle address components separately
+        if (entityType === 'city') {
+          addressComponents.city = mentionText;
+        } else if (entityType === 'province' || entityType === 'state') {
+          addressComponents.province = mentionText;
+        } else if (entityType === 'postal_code' || entityType === 'postalcode' || entityType === 'zip') {
+          addressComponents.postalCode = mentionText;
+        }
+        continue;
+      }
+
+      if (!mappedField) {
+        console.log(`[OCRService] Unknown entity type: ${entityType}`);
+        continue;
+      }
+
+      // Handle different field types
+      switch (mappedField) {
+        case 'lastName':
+          extractedData.lastName = mentionText;
+          break;
+        case 'firstName':
+          extractedData.firstName = mentionText;
+          break;
+        case 'documentNumber':
+          extractedData.documentNumber = mentionText;
+          break;
+        case 'dateOfBirth':
+          extractedData.dateOfBirth = this.extractDateValue(normalizedValue, mentionText);
+          break;
+        case 'expiryDate':
+          extractedData.expiryDate = this.extractDateValue(normalizedValue, mentionText);
+          break;
+        case 'issueDate':
+          extractedData.issueDate = this.extractDateValue(normalizedValue, mentionText);
+          break;
+        case 'address':
+          addressComponents.street = mentionText;
+          break;
+        case 'mrz':
+          extractedData.mrz = mentionText;
+          break;
+        case 'gender':
+          extractedData.gender = mentionText.charAt(0).toUpperCase();
+          break;
+        case 'nationality':
+          extractedData.nationality = mentionText;
+          break;
+      }
+
+      // Update confidence if available
+      if (entity.confidence) {
+        extractedData.confidence = Math.min(extractedData.confidence || 1, entity.confidence);
+      }
+    }
+
+    // Construct full name from first and last name
+    if (extractedData.firstName || extractedData.lastName) {
+      extractedData.fullName = [extractedData.firstName, extractedData.lastName]
+        .filter(Boolean)
+        .join(' ');
+    }
+
+    // Construct address from components
+    if (addressComponents.street || addressComponents.city || addressComponents.province) {
+      extractedData.address = {
+        street: addressComponents.street,
+        city: addressComponents.city,
+        state: addressComponents.province,
+        postalCode: addressComponents.postalCode,
+        country: this.detectCountryFromAddress(addressComponents)
+      };
+    }
+
+    console.log('[OCRService] Document AI extracted data:', extractedData);
+
+    return extractedData;
+  }
+
+  private extractDateValue(normalizedValue: any, mentionText: string): string {
+    if (normalizedValue?.dateValue) {
+      const dv = normalizedValue.dateValue;
+      return `${dv.year}-${String(dv.month).padStart(2, '0')}-${String(dv.day).padStart(2, '0')}`;
+    }
+    // Try to parse the mention text as a date
+    return this.normalizeDate(mentionText);
+  }
+
+  private detectCountryFromAddress(addressComponents: { province?: string; postalCode?: string }): string {
+    // Canadian postal codes are in format A1A 1A1 (letter-digit-letter space digit-letter-digit)
+    if (addressComponents.postalCode && /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i.test(addressComponents.postalCode)) {
+      return 'CAN';
+    }
+    // Canadian provinces
+    const canadianProvinces = ['ON', 'QC', 'BC', 'AB', 'MB', 'SK', 'NS', 'NB', 'NL', 'PE', 'YT', 'NT', 'NU'];
+    if (addressComponents.province && canadianProvinces.includes(addressComponents.province.toUpperCase())) {
+      return 'CAN';
+    }
+    // US ZIP codes are 5 digits or 5+4 format
+    if (addressComponents.postalCode && /^\d{5}(-\d{4})?$/.test(addressComponents.postalCode)) {
+      return 'USA';
+    }
+    return 'USA'; // Default fallback
   }
 
   private parseDriversLicense(text: string, confidence: number): ExtractedDocumentData {
@@ -309,15 +617,23 @@ export class OCRService {
   private parseAddress(addressText: string): ExtractedDocumentData['address'] {
     const parts = addressText.split(/[,\n]+/).map(p => p.trim());
 
-    const postalCodeMatch = addressText.match(/\b\d{5}(?:-\d{4})?\b/);
+    // Try to detect Canadian postal code (A1A 1A1 format)
+    const canadianPostalMatch = addressText.match(/\b([A-Z]\d[A-Z]\s?\d[A-Z]\d)\b/i);
+    // Try to detect US ZIP code
+    const usZipMatch = addressText.match(/\b(\d{5}(?:-\d{4})?)\b/);
+
     const stateMatch = addressText.match(/\b([A-Z]{2})\b/);
+
+    const isCanadian = !!canadianPostalMatch;
 
     return {
       street: parts[0] || undefined,
       city: parts[1] || undefined,
       state: stateMatch ? stateMatch[1] : undefined,
-      postalCode: postalCodeMatch ? postalCodeMatch[0] : undefined,
-      country: 'USA'
+      postalCode: isCanadian
+        ? canadianPostalMatch![1].toUpperCase()
+        : (usZipMatch ? usZipMatch[1] : undefined),
+      country: isCanadian ? 'CAN' : 'USA'
     };
   }
 
