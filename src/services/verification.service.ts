@@ -99,8 +99,9 @@ export class VerificationService {
     }
 
     // Auto-detect document type to validate against user selection
+    // Pass user-selected type to prioritize matching processors
     console.log('[VerificationService] Auto-detecting document type...');
-    const detectionResult = await this.documentScanner.detectDocumentType(preprocessed);
+    const detectionResult = await this.documentScanner.detectDocumentType(preprocessed, documentType);
     console.log('[VerificationService] Auto-detected document type:', detectionResult.documentType,
       'confidence:', detectionResult.confidence,
       'method:', detectionResult.method);

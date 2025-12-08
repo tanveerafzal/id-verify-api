@@ -364,14 +364,19 @@ export class DocumentScannerService {
 
   /**
    * Detect document type using Document AI, Google Vision, and keyword analysis
+   * @param imageBuffer - The image buffer to analyze
+   * @param userSelectedType - Optional user-selected document type to prioritize matching processors
    */
-  async detectDocumentType(imageBuffer: Buffer): Promise<DocumentDetectionResult> {
+  async detectDocumentType(imageBuffer: Buffer, userSelectedType?: DocumentType): Promise<DocumentDetectionResult> {
     console.log('[DocumentScannerService] Starting document type detection');
+    if (userSelectedType) {
+      console.log('[DocumentScannerService] User selected type:', userSelectedType);
+    }
 
     try {
       // Try Document AI first (most accurate for ID documents)
       if (this.useDocumentAi && this.documentAiClient) {
-        const result = await this.detectWithDocumentAi(imageBuffer);
+        const result = await this.detectWithDocumentAi(imageBuffer, userSelectedType);
         if (result.confidence > 0.5) {
           console.log('[DocumentScannerService] Document AI detection:', result);
           return result;
@@ -416,26 +421,18 @@ export class DocumentScannerService {
 
   /**
    * Detect document type using Document AI processors
-   * Tries each processor and determines type based on which one extracts data successfully
+   * Tries processors in priority order based on user selection
+   * @param imageBuffer - The image buffer to analyze
+   * @param userSelectedType - Optional user-selected document type to prioritize matching processors
    */
-  private async detectWithDocumentAi(imageBuffer: Buffer): Promise<DocumentDetectionResult> {
+  private async detectWithDocumentAi(imageBuffer: Buffer, userSelectedType?: DocumentType): Promise<DocumentDetectionResult> {
     console.log('[DocumentScannerService] Attempting Document AI detection');
 
     const projectId = config.googleCloud.projectId;
     const location = config.googleCloud.location || 'us';
 
-    // Define processors to try with their associated document types
-    const processorConfigs = [
-      {
-        processorId: config.googleCloud.documentAi.caDriversLicenseProcessorId,
-        documentType: DocumentType.DRIVERS_LICENSE,
-        name: 'Canadian Driver License'
-      },
-      {
-        processorId: config.googleCloud.documentAi.usDriversLicenseProcessorId,
-        documentType: DocumentType.DRIVERS_LICENSE,
-        name: 'US Driver License'
-      },
+    // Define all available processors
+    const allProcessors = [
       {
         processorId: config.googleCloud.documentAi.caPassportProcessorId,
         documentType: DocumentType.PASSPORT,
@@ -445,10 +442,20 @@ export class DocumentScannerService {
         processorId: config.googleCloud.documentAi.usPassportProcessorId,
         documentType: DocumentType.PASSPORT,
         name: 'US Passport'
+      },
+      {
+        processorId: config.googleCloud.documentAi.caDriversLicenseProcessorId,
+        documentType: DocumentType.DRIVERS_LICENSE,
+        name: 'Canadian Driver License'
+      },
+      {
+        processorId: config.googleCloud.documentAi.usDriversLicenseProcessorId,
+        documentType: DocumentType.DRIVERS_LICENSE,
+        name: 'US Driver License'
       }
     ].filter(p => p.processorId); // Only include configured processors
 
-    if (processorConfigs.length === 0) {
+    if (allProcessors.length === 0) {
       console.log('[DocumentScannerService] No Document AI processors configured');
       return {
         documentType: DocumentType.OTHER,
@@ -458,7 +465,18 @@ export class DocumentScannerService {
       };
     }
 
-    // Try each processor and score the results
+    // Sort processors based on user selection - matching type first
+    let processorConfigs = [...allProcessors];
+    if (userSelectedType) {
+      processorConfigs.sort((a, b) => {
+        const aMatches = a.documentType === userSelectedType ? 1 : 0;
+        const bMatches = b.documentType === userSelectedType ? 1 : 0;
+        return bMatches - aMatches; // Matching processors first
+      });
+      console.log('[DocumentScannerService] Processor order prioritized for:', userSelectedType);
+    }
+
+    // Try processors in order
     const results: Array<{
       documentType: DocumentType;
       confidence: number;
@@ -466,6 +484,9 @@ export class DocumentScannerService {
       processorName: string;
       detectedFields: string[];
     }> = [];
+
+    // High confidence threshold - if user-selected type processor achieves this, use it immediately
+    const HIGH_CONFIDENCE_THRESHOLD = 0.85;
 
     for (const processorConfig of processorConfigs) {
       try {
@@ -502,13 +523,27 @@ export class DocumentScannerService {
 
           console.log(`[DocumentScannerService] ${processorConfig.name}: ${meaningfulEntities.length} entities, confidence: ${confidence.toFixed(2)}`);
 
-          results.push({
+          const result = {
             documentType: processorConfig.documentType,
             confidence,
             entityCount: meaningfulEntities.length,
             processorName: processorConfig.name,
             detectedFields
-          });
+          };
+
+          results.push(result);
+
+          // If this is the user-selected type and confidence is high, use it immediately
+          // This prevents trying other processors unnecessarily
+          if (userSelectedType && processorConfig.documentType === userSelectedType && confidence >= HIGH_CONFIDENCE_THRESHOLD) {
+            console.log(`[DocumentScannerService] High confidence match for user-selected type: ${processorConfig.name} (${confidence.toFixed(2)})`);
+            return {
+              documentType: result.documentType,
+              confidence: result.confidence,
+              detectedKeywords: result.detectedFields,
+              method: 'document_ai'
+            };
+          }
         } else {
           console.log(`[DocumentScannerService] ${processorConfig.name}: No entities extracted`);
         }
@@ -528,7 +563,26 @@ export class DocumentScannerService {
     }
 
     // Sort by confidence (descending) then by entity count (descending)
+    // But give preference to user-selected type if confidence difference is small
     results.sort((a, b) => {
+      // If user selected a type, give it preference when confidence is close
+      if (userSelectedType) {
+        const aMatchesUser = a.documentType === userSelectedType;
+        const bMatchesUser = b.documentType === userSelectedType;
+
+        // If one matches user selection and the other doesn't
+        if (aMatchesUser !== bMatchesUser) {
+          // If the matching one has reasonable confidence (within 0.15 of the other), prefer it
+          if (aMatchesUser && a.confidence >= b.confidence - 0.15) {
+            return -1; // a wins (user-selected type)
+          }
+          if (bMatchesUser && b.confidence >= a.confidence - 0.15) {
+            return 1; // b wins (user-selected type)
+          }
+        }
+      }
+
+      // Default: sort by confidence then entity count
       if (Math.abs(a.confidence - b.confidence) > 0.1) {
         return b.confidence - a.confidence;
       }
