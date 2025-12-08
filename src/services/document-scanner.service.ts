@@ -1,13 +1,15 @@
 import sharp from 'sharp';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
+import { DocumentProcessorServiceClient } from '@google-cloud/documentai';
 import { DocumentQualityCheck, DocumentType } from '../types/verification.types';
+import { config } from '../config';
 
 // Document detection result interface
 export interface DocumentDetectionResult {
   documentType: DocumentType;
   confidence: number;
   detectedKeywords: string[];
-  method: 'google_vision' | 'keyword_analysis' | 'fallback';
+  method: 'document_ai' | 'google_vision' | 'keyword_analysis' | 'fallback';
 }
 
 // Keywords and patterns for each document type
@@ -125,10 +127,13 @@ const VISION_LABEL_MAPPINGS: Record<string, DocumentType[]> = {
 
 export class DocumentScannerService {
   private visionClient: ImageAnnotatorClient | null = null;
+  private documentAiClient: DocumentProcessorServiceClient | null = null;
   private useGoogleVision: boolean = false;
+  private useDocumentAi: boolean = false;
 
   constructor() {
     this.initializeGoogleVision();
+    this.initializeDocumentAi();
   }
 
   private initializeGoogleVision(): void {
@@ -141,6 +146,24 @@ export class DocumentScannerService {
     } catch (error) {
       console.log('[DocumentScannerService] Google Vision not available:', error);
       this.useGoogleVision = false;
+    }
+  }
+
+  private initializeDocumentAi(): void {
+    try {
+      const hasProcessors = config.googleCloud.documentAi.caDriversLicenseProcessorId ||
+                           config.googleCloud.documentAi.usDriversLicenseProcessorId ||
+                           config.googleCloud.documentAi.caPassportProcessorId ||
+                           config.googleCloud.documentAi.usPassportProcessorId;
+
+      if (config.googleCloud.projectId && hasProcessors) {
+        this.documentAiClient = new DocumentProcessorServiceClient();
+        this.useDocumentAi = true;
+        console.log('[DocumentScannerService] Google Document AI initialized');
+      }
+    } catch (error) {
+      console.log('[DocumentScannerService] Document AI not available:', error);
+      this.useDocumentAi = false;
     }
   }
   async preprocessImage(imageBuffer: Buffer): Promise<Buffer> {
@@ -340,13 +363,23 @@ export class DocumentScannerService {
   }
 
   /**
-   * Detect document type using Google Vision and keyword analysis
+   * Detect document type using Document AI, Google Vision, and keyword analysis
    */
   async detectDocumentType(imageBuffer: Buffer): Promise<DocumentDetectionResult> {
     console.log('[DocumentScannerService] Starting document type detection');
 
     try {
-      // Try Google Vision first for both labels and text
+      // Try Document AI first (most accurate for ID documents)
+      if (this.useDocumentAi && this.documentAiClient) {
+        const result = await this.detectWithDocumentAi(imageBuffer);
+        if (result.confidence > 0.5) {
+          console.log('[DocumentScannerService] Document AI detection:', result);
+          return result;
+        }
+        console.log('[DocumentScannerService] Document AI confidence too low:', result.confidence);
+      }
+
+      // Fall back to Google Vision for labels and text
       if (this.useGoogleVision && this.visionClient) {
         const result = await this.detectWithGoogleVision(imageBuffer);
         if (result.confidence > 0.6) {
@@ -379,6 +412,138 @@ export class DocumentScannerService {
         method: 'fallback'
       };
     }
+  }
+
+  /**
+   * Detect document type using Document AI processors
+   * Tries each processor and determines type based on which one extracts data successfully
+   */
+  private async detectWithDocumentAi(imageBuffer: Buffer): Promise<DocumentDetectionResult> {
+    console.log('[DocumentScannerService] Attempting Document AI detection');
+
+    const projectId = config.googleCloud.projectId;
+    const location = config.googleCloud.location || 'us';
+
+    // Define processors to try with their associated document types
+    const processorConfigs = [
+      {
+        processorId: config.googleCloud.documentAi.caDriversLicenseProcessorId,
+        documentType: DocumentType.DRIVERS_LICENSE,
+        name: 'Canadian Driver License'
+      },
+      {
+        processorId: config.googleCloud.documentAi.usDriversLicenseProcessorId,
+        documentType: DocumentType.DRIVERS_LICENSE,
+        name: 'US Driver License'
+      },
+      {
+        processorId: config.googleCloud.documentAi.caPassportProcessorId,
+        documentType: DocumentType.PASSPORT,
+        name: 'Canadian Passport'
+      },
+      {
+        processorId: config.googleCloud.documentAi.usPassportProcessorId,
+        documentType: DocumentType.PASSPORT,
+        name: 'US Passport'
+      }
+    ].filter(p => p.processorId); // Only include configured processors
+
+    if (processorConfigs.length === 0) {
+      console.log('[DocumentScannerService] No Document AI processors configured');
+      return {
+        documentType: DocumentType.OTHER,
+        confidence: 0,
+        detectedKeywords: [],
+        method: 'document_ai'
+      };
+    }
+
+    // Try each processor and score the results
+    const results: Array<{
+      documentType: DocumentType;
+      confidence: number;
+      entityCount: number;
+      processorName: string;
+      detectedFields: string[];
+    }> = [];
+
+    for (const processorConfig of processorConfigs) {
+      try {
+        const processorName = `projects/${projectId}/locations/${location}/processors/${processorConfig.processorId}`;
+        console.log(`[DocumentScannerService] Trying processor: ${processorConfig.name}`);
+
+        const request = {
+          name: processorName,
+          rawDocument: {
+            content: imageBuffer.toString('base64'),
+            mimeType: 'image/jpeg'
+          }
+        };
+
+        const [response] = await this.documentAiClient!.processDocument(request);
+        const document = response.document;
+
+        if (document?.entities && document.entities.length > 0) {
+          // Count meaningful entities (those with actual values)
+          const meaningfulEntities = document.entities.filter(e =>
+            e.mentionText && e.mentionText.trim().length > 0
+          );
+
+          const detectedFields = meaningfulEntities.map(e => e.type || 'unknown');
+
+          // Calculate confidence based on entity count and their confidence scores
+          const avgConfidence = meaningfulEntities.reduce((sum, e) => sum + (e.confidence || 0), 0) / (meaningfulEntities.length || 1);
+
+          // Score based on number of entities extracted (more = better match)
+          const entityScore = Math.min(1, meaningfulEntities.length / 5); // 5+ entities = max score
+
+          // Combined confidence
+          const confidence = (avgConfidence * 0.6) + (entityScore * 0.4);
+
+          console.log(`[DocumentScannerService] ${processorConfig.name}: ${meaningfulEntities.length} entities, confidence: ${confidence.toFixed(2)}`);
+
+          results.push({
+            documentType: processorConfig.documentType,
+            confidence,
+            entityCount: meaningfulEntities.length,
+            processorName: processorConfig.name,
+            detectedFields
+          });
+        } else {
+          console.log(`[DocumentScannerService] ${processorConfig.name}: No entities extracted`);
+        }
+      } catch (error) {
+        console.log(`[DocumentScannerService] ${processorConfig.name} failed:`, error instanceof Error ? error.message : error);
+      }
+    }
+
+    // Find the best result
+    if (results.length === 0) {
+      return {
+        documentType: DocumentType.OTHER,
+        confidence: 0,
+        detectedKeywords: [],
+        method: 'document_ai'
+      };
+    }
+
+    // Sort by confidence (descending) then by entity count (descending)
+    results.sort((a, b) => {
+      if (Math.abs(a.confidence - b.confidence) > 0.1) {
+        return b.confidence - a.confidence;
+      }
+      return b.entityCount - a.entityCount;
+    });
+
+    const best = results[0];
+    console.log(`[DocumentScannerService] Best match: ${best.processorName} (${best.documentType}) with confidence ${best.confidence.toFixed(2)}`);
+
+    return {
+      documentType: best.documentType,
+      confidence: best.confidence,
+      detectedKeywords: best.detectedFields,
+      method: 'document_ai'
+    };
   }
 
   /**
