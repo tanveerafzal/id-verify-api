@@ -167,6 +167,9 @@ export class VerificationController {
           extractedData: result.extractedData,
           quality: result.qualityCheck,
           documentType: result.documentType,
+          userSelectedType: result.userSelectedType,
+          documentTypeCorrected: result.documentTypeCorrected,
+          documentTypeCorrectionMessage: result.documentTypeCorrectionMessage,
           documentUrl,
           storageType: s3Service.isEnabled() ? 's3' : 'local',
           ...(result.detection && { detection: result.detection })

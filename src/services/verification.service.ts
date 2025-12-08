@@ -106,28 +106,33 @@ export class VerificationService {
       'method:', detectionResult.method);
 
     let finalDocumentType = detectionResult.documentType;
+    let documentTypeCorrected = false;
+    let documentTypeCorrectionMessage: string | null = null;
 
-    // If user provided a document type, validate it matches the detected type
+    // If user provided a document type, check if it matches the detected type
     if (documentType) {
       console.log('[VerificationService] User selected document type:', documentType);
       console.log('[VerificationService] Detected document type:', detectionResult.documentType);
 
       // Check if the detected type matches the user-selected type
       if (detectionResult.documentType !== documentType) {
-        // Only throw error if detection is reliable:
-        // - High confidence (>= 0.8)
-        // - Using google_vision method (not keyword_analysis fallback)
-        const isReliableDetection = detectionResult.confidence >= 0.8 && detectionResult.method === 'google_vision';
+        // Check if detection is reliable (Document AI or high confidence Vision)
+        const isReliableDetection = detectionResult.confidence >= 0.5 &&
+          (detectionResult.method === 'document_ai' ||
+           (detectionResult.method === 'google_vision' && detectionResult.confidence >= 0.7));
 
         if (isReliableDetection) {
+          // Use Document AI detected type and inform the user
           const userTypeName = this.getDocumentTypeName(documentType);
           const detectedTypeName = this.getDocumentTypeName(detectionResult.documentType);
-          throw new Error(
-            `Document type mismatch: You selected "${userTypeName}" but the uploaded document appears to be a "${detectedTypeName}". ` +
-            `Please upload the correct document type or select the appropriate document type.`
-          );
+
+          documentTypeCorrected = true;
+          documentTypeCorrectionMessage = `You selected "${userTypeName}" but we detected this document as "${detectedTypeName}". We will proceed with the detected document type for more accurate verification.`;
+
+          console.log('[VerificationService] Document type corrected:', documentTypeCorrectionMessage);
+          finalDocumentType = detectionResult.documentType;
         } else {
-          // Low confidence or fallback detection - trust user's selection
+          // Low confidence detection - trust user's selection
           console.log('[VerificationService] Detection not reliable (confidence:', detectionResult.confidence,
             ', method:', detectionResult.method, '), using user-selected type:', documentType);
           finalDocumentType = documentType;
@@ -180,6 +185,9 @@ export class VerificationService {
       extractedData: enrichedExtractedData,
       qualityCheck,
       documentType: finalDocumentType,
+      userSelectedType: documentType || null,
+      documentTypeCorrected,
+      documentTypeCorrectionMessage,
       ...(detectionResult && { detection: detectionResult })
     };
   }
