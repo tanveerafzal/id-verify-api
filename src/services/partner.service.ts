@@ -581,7 +581,7 @@ export class PartnerService {
       });
 
       // Generate verification link
-      const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify?verificationId=${verification.id}`;
+      const verificationLink = `${config.server.frontendUrl}/verify?verificationId=${verification.id}`;
 
       // Send email to user
       try {
@@ -631,7 +631,7 @@ export class PartnerService {
       }
 
       // Generate verification link
-      const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify?verificationId=${verification.id}`;
+      const verificationLink = `${config.server.frontendUrl}/verify?verificationId=${verification.id}`;
 
       // Send email
       await emailService.sendVerificationEmail(
@@ -675,8 +675,7 @@ export class PartnerService {
       });
 
       // Generate reset link - points to frontend reset page
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
-      const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+      const resetLink = `${config.server.frontendUrl}/partner/reset-password?token=${resetToken}`;
 
       // Send reset email
       await emailService.sendPasswordResetEmail(
