@@ -192,6 +192,33 @@ export class PartnerService {
     };
   }
 
+  async changePassword(partnerId: string, currentPassword: string, newPassword: string) {
+    const partner = await prisma.partner.findUnique({
+      where: { id: partnerId }
+    });
+
+    if (!partner) {
+      throw new Error('Partner not found');
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, partner.password);
+
+    if (!isValidPassword) {
+      throw new Error('Current password is incorrect');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.partner.update({
+      where: { id: partnerId },
+      data: { password: hashedPassword }
+    });
+
+    logger.info(`[PartnerService] Password changed for partner: ${partner.email}`);
+
+    return { success: true };
+  }
+
   async upgradeTier(partnerId: string, tierName: string) {
     const tier = await prisma.tier.findUnique({
       where: { name: tierName.toLowerCase() }

@@ -16,6 +16,7 @@ router.get('/:partnerId/public', controller.getPublicPartnerInfo.bind(controller
 // Protected routes
 router.get('/profile', partnerAuthMiddleware, controller.getProfile.bind(controller));
 router.put('/profile', partnerAuthMiddleware, controller.updateProfile.bind(controller));
+router.post('/change-password', partnerAuthMiddleware, controller.changePassword.bind(controller));
 router.post('/upload-logo', partnerAuthMiddleware, upload.single('logo'), controller.uploadLogo.bind(controller));
 router.post('/upgrade-tier', partnerAuthMiddleware, controller.upgradeTier.bind(controller));
 router.get('/usage-stats', partnerAuthMiddleware, controller.getUsageStats.bind(controller));

@@ -245,6 +245,54 @@ export class PartnerController {
     }
   }
 
+  async changePassword(req: AuthRequest, res: Response) {
+    try {
+      if (!req.partner) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authenticated'
+        });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          error: 'Current password and new password are required'
+        });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({
+          success: false,
+          error: 'New password must be at least 8 characters'
+        });
+      }
+
+      await partnerService.changePassword(req.partner.id, currentPassword, newPassword);
+
+      return res.status(200).json({
+        success: true,
+        data: { message: 'Password changed successfully' }
+      });
+    } catch (error) {
+      logger.error('Change password error:', error);
+
+      if (error instanceof Error && error.message === 'Current password is incorrect') {
+        return res.status(400).json({
+          success: false,
+          error: error.message
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to change password'
+      });
+    }
+  }
+
   async upgradeTier(req: AuthRequest, res: Response) {
     try {
       if (!req.partner) {
