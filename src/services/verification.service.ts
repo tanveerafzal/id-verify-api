@@ -12,6 +12,7 @@ import { OCRService } from './ocr.service';
 import { BiometricService } from './biometric.service';
 import { EmailService } from './email.service';
 import { s3Service } from './s3.service';
+import { documentIdValidator } from './document-id-validator.service';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import https from 'https';
@@ -74,20 +75,63 @@ export class VerificationService {
     side?: 'FRONT' | 'BACK',
     documentUrl?: string
   ) {
-    // Check if this is a retry - if verification is FAILED, delete old documents
     const verification = await prisma.verification.findUnique({
-      where: { id: verificationId }
+      where: { id: verificationId },
+      include: { documents: true }
     });
 
-    if (verification?.status === 'FAILED') {
-      console.log('[VerificationService] Retry detected - clearing old documents for verification:', verificationId);
+    if (!verification) {
+      throw new Error('Verification not found');
+    }
 
-      // Delete all existing documents for this verification (including selfies - user will re-upload everything)
-      await prisma.document.deleteMany({
-        where: { verificationId }
+    // Delete existing documents of the same type/side to keep only the latest
+    // This handles both retry scenarios and re-uploads
+    if (documentType) {
+      const existingDocs = verification.documents.filter(doc => {
+        // For documents with sides (like driver's license), match type AND side
+        if (side) {
+          return doc.type === documentType && doc.side === side;
+        }
+        // For documents without sides (like passport), match just the type
+        return doc.type === documentType;
       });
 
-      console.log('[VerificationService] Old documents cleared for retry');
+      if (existingDocs.length > 0) {
+        console.log(`[VerificationService] Deleting ${existingDocs.length} existing ${documentType}${side ? ` (${side})` : ''} document(s) - keeping only the latest upload`);
+
+        for (const doc of existingDocs) {
+          // Delete from S3 if URL exists
+          if (doc.originalUrl && doc.originalUrl !== 'not-saved') {
+            try {
+              const key = s3Service.extractKeyFromUrl(doc.originalUrl);
+              if (key && s3Service.isEnabled()) {
+                await s3Service.deleteFile(key);
+                console.log(`[VerificationService] Deleted old document from S3: ${key}`);
+              }
+            } catch (err) {
+              console.error('[VerificationService] Failed to delete old document from S3:', err);
+            }
+          }
+
+          // Delete from database
+          await prisma.document.delete({
+            where: { id: doc.id }
+          });
+        }
+
+        console.log('[VerificationService] Old documents cleared');
+      }
+    }
+
+    // If this is a retry (verification was FAILED), also clear the old verification result
+    if (verification.status === 'FAILED') {
+      console.log('[VerificationService] Retry detected - resetting verification status');
+
+      // Reset verification status to allow re-processing
+      await prisma.verification.update({
+        where: { id: verificationId },
+        data: { status: 'PENDING' }
+      });
     }
 
     const preprocessed = await this.documentScanner.preprocessImage(imageBuffer);
@@ -105,6 +149,22 @@ export class VerificationService {
     console.log('[VerificationService] Auto-detected document type:', detectionResult.documentType,
       'confidence:', detectionResult.confidence,
       'method:', detectionResult.method);
+
+    // Fail if document type cannot be detected (OTHER type with low confidence or fallback method)
+    const isUndetectable = detectionResult.documentType === 'OTHER' ||
+                           detectionResult.method === 'fallback' ||
+                           detectionResult.confidence < 0.4;
+
+    if (isUndetectable && !documentType) {
+      // No user-provided type and we couldn't detect it
+      throw new Error('Unable to detect document type. Please ensure you upload a valid government-issued ID document (driver\'s license, passport, national ID, etc.)');
+    }
+
+    if (isUndetectable && documentType) {
+      // User provided a type but we couldn't confirm it's that type of document
+      const typeName = this.getDocumentTypeName(documentType);
+      throw new Error(`Unable to verify this is a ${typeName}. Please ensure you upload a clear image of a valid ${typeName}.`);
+    }
 
     let finalDocumentType = detectionResult.documentType;
     let documentTypeCorrected = false;
@@ -144,8 +204,63 @@ export class VerificationService {
     }
 
     await this.ocrService.initialize();
-    const extractedData = await this.ocrService.extractDocumentData(preprocessed, finalDocumentType);
+    // Pass cached Document AI entities if available to avoid redundant API call
+    const extractedData = await this.ocrService.extractDocumentData(
+      preprocessed,
+      finalDocumentType,
+      detectionResult.documentAiEntities
+    );
     await this.ocrService.terminate();
+
+    // Validate essential fields were extracted (name, document number)
+    const missingFields: string[] = [];
+
+    // Check for name (fullName or firstName+lastName)
+    const hasName = extractedData.fullName ||
+                    (extractedData.firstName && extractedData.lastName);
+    if (!hasName) {
+      missingFields.push('name');
+    }
+
+    // Check for document number
+    if (!extractedData.documentNumber) {
+      missingFields.push('document number');
+    }
+
+    if (missingFields.length > 0) {
+      const typeName = this.getDocumentTypeName(finalDocumentType);
+      console.log('[VerificationService] Missing essential fields:', missingFields);
+      console.log('[VerificationService] Extracted data:', JSON.stringify(extractedData, null, 2));
+      throw new Error(`Unable to extract ${missingFields.join(' and ')} from the document. Please upload a clearer image of your ${typeName} where all text is visible and readable.`);
+    }
+
+    // Validate document ID number format
+    // Pass extracted person data for cross-validation (e.g., Ontario DL starts with last name initial)
+    const idValidation = documentIdValidator.validateDocumentId(
+      extractedData.documentNumber!,
+      finalDocumentType,
+      extractedData.issuingCountry,
+      {
+        firstName: extractedData.firstName,
+        lastName: extractedData.lastName,
+        fullName: extractedData.fullName,
+        dateOfBirth: extractedData.dateOfBirth
+      }
+    );
+
+    console.log('[VerificationService] Document ID validation:', {
+      documentNumber: idValidation.normalizedNumber,
+      isValid: idValidation.isValid,
+      country: idValidation.country,
+      state: idValidation.state,
+      errors: idValidation.errors,
+      warnings: idValidation.warnings
+    });
+
+    if (!idValidation.isValid) {
+      const typeName = this.getDocumentTypeName(finalDocumentType);
+      throw new Error(`Invalid ${typeName} number format: ${idValidation.errors.join('. ')}. Please ensure you uploaded a valid ${typeName}.`);
+    }
 
     // Generate thumbnail for future use
     await this.documentScanner.generateThumbnail(preprocessed);
@@ -261,6 +376,30 @@ export class VerificationService {
     const flags: string[] = [];
     const warnings: string[] = [];
 
+    // CRITICAL: Validate required documents based on verification type
+    const validIdTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'VOTER_ID'];
+    const idDocuments = verification.documents.filter(doc => validIdTypes.includes(doc.type));
+    const selfieDocuments = verification.documents.filter(doc => doc.type === 'SELFIE');
+
+    console.log('[VerificationService] Documents present:', verification.documents.map(d => d.type));
+    console.log('[VerificationService] Verification type:', verification.type);
+
+    // Check ID document requirement (required for all types except SELFIE_ONLY)
+    if (verification.type !== 'SELFIE_ONLY' && idDocuments.length === 0) {
+      console.log('[VerificationService] FAILED: No valid ID document found');
+      throw new Error('No valid ID document found. Please upload a government-issued ID (driver\'s license, passport, national ID, etc.) before submitting verification.');
+    }
+
+    // Check selfie requirement (required for IDENTITY, FULL_KYC, and SELFIE_ONLY)
+    const requiresSelfie = ['IDENTITY', 'FULL_KYC', 'SELFIE_ONLY'].includes(verification.type);
+    if (requiresSelfie && selfieDocuments.length === 0) {
+      console.log('[VerificationService] FAILED: No selfie found');
+      throw new Error('No selfie found. Please upload a selfie photo for identity verification.');
+    }
+
+    console.log('[VerificationService] Valid ID documents found:', idDocuments.map(d => d.type));
+    console.log('[VerificationService] Selfie documents found:', selfieDocuments.length);
+
     const documentChecks = await this.verifyDocuments(verification.documents);
 
     const extractedData = this.mergeExtractedData(verification.documents);
@@ -287,7 +426,7 @@ export class VerificationService {
 
       if (!nameMatch) {
         flags.push('NAME_MISMATCH');
-        warnings.push(`Name on document does not match requester name: ${nameComparisonDetails}`);
+        // Name mismatch is a critical error that fails verification - not a warning
       }
     } else {
       console.log('[VerificationService] No requester name provided, skipping name validation');

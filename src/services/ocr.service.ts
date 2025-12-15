@@ -2,6 +2,7 @@ import Tesseract from 'tesseract.js';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { DocumentProcessorServiceClient } from '@google-cloud/documentai';
 import { DocumentType, ExtractedDocumentData } from '../types/verification.types';
+import { DocumentAiEntity } from './document-scanner.service';
 import { config } from '../config';
 
 // Entity name mappings for different processor types
@@ -214,9 +215,16 @@ export class OCRService {
 
   async extractDocumentData(
     imageBuffer: Buffer,
-    documentType: DocumentType
+    documentType: DocumentType,
+    cachedDocumentAiEntities?: DocumentAiEntity[]
   ): Promise<ExtractedDocumentData> {
     console.log('[OCRService] Extracting document data for type:', documentType);
+
+    // If we have cached Document AI entities from detection, use them directly (avoid redundant API call)
+    if (cachedDocumentAiEntities && cachedDocumentAiEntities.length > 0) {
+      console.log('[OCRService] Using cached Document AI entities (', cachedDocumentAiEntities.length, 'entities) - skipping redundant API call');
+      return this.extractFromCachedEntities(cachedDocumentAiEntities);
+    }
 
     // Try Document AI first if configured and document type is supported
     if (this.useDocumentAi && this.documentAiClient) {
@@ -256,6 +264,115 @@ export class OCRService {
     }
 
     console.log('[OCRService] Parsed extracted data:', extractedData);
+
+    return extractedData;
+  }
+
+  /**
+   * Extract document data from cached Document AI entities
+   * This avoids making a redundant Document AI API call when detection already extracted the data
+   */
+  private extractFromCachedEntities(entities: DocumentAiEntity[]): ExtractedDocumentData {
+    console.log('[OCRService] Processing', entities.length, 'cached Document AI entities');
+
+    const extractedData: ExtractedDocumentData = {
+      confidence: 0.95 // Document AI is highly accurate
+    };
+
+    // Temporary storage for address components
+    const addressComponents: {
+      street?: string;
+      city?: string;
+      province?: string;
+      postalCode?: string;
+    } = {};
+
+    for (const entity of entities) {
+      const entityType = entity.type.toLowerCase().replace(/\s+/g, '_');
+      const mentionText = entity.mentionText;
+      const normalizedValue = entity.normalizedValue;
+
+      console.log(`[OCRService] Cached entity: ${entityType} = ${mentionText}`);
+
+      // Map entity to our field using the mapping table
+      const mappedField = ENTITY_MAPPINGS[entityType];
+
+      if (mappedField === 'skip') {
+        // Handle address components separately
+        if (entityType === 'city') {
+          addressComponents.city = mentionText;
+        } else if (entityType === 'province' || entityType === 'state') {
+          addressComponents.province = mentionText;
+        } else if (entityType === 'postal_code' || entityType === 'postalcode' || entityType === 'zip') {
+          addressComponents.postalCode = mentionText;
+        }
+        continue;
+      }
+
+      if (!mappedField) {
+        console.log(`[OCRService] Unknown entity type: ${entityType}`);
+        continue;
+      }
+
+      // Handle different field types
+      switch (mappedField) {
+        case 'lastName':
+          extractedData.lastName = mentionText;
+          break;
+        case 'firstName':
+          extractedData.firstName = mentionText;
+          break;
+        case 'documentNumber':
+          extractedData.documentNumber = mentionText;
+          break;
+        case 'dateOfBirth':
+          extractedData.dateOfBirth = this.extractDateValue(normalizedValue, mentionText);
+          break;
+        case 'expiryDate':
+          extractedData.expiryDate = this.extractDateValue(normalizedValue, mentionText);
+          break;
+        case 'issueDate':
+          extractedData.issueDate = this.extractDateValue(normalizedValue, mentionText);
+          break;
+        case 'address':
+          addressComponents.street = mentionText;
+          break;
+        case 'mrz':
+          extractedData.mrz = mentionText;
+          break;
+        case 'gender':
+          extractedData.gender = mentionText.charAt(0).toUpperCase();
+          break;
+        case 'nationality':
+          extractedData.nationality = mentionText;
+          break;
+      }
+
+      // Update confidence if available
+      if (entity.confidence) {
+        extractedData.confidence = Math.min(extractedData.confidence || 1, entity.confidence);
+      }
+    }
+
+    // Construct full name from first and last name
+    if (extractedData.firstName || extractedData.lastName) {
+      extractedData.fullName = [extractedData.firstName, extractedData.lastName]
+        .filter(Boolean)
+        .join(' ');
+    }
+
+    // Construct address from components
+    if (addressComponents.street || addressComponents.city || addressComponents.province) {
+      extractedData.address = {
+        street: addressComponents.street,
+        city: addressComponents.city,
+        state: addressComponents.province,
+        postalCode: addressComponents.postalCode,
+        country: this.detectCountryFromAddress(addressComponents)
+      };
+    }
+
+    console.log('[OCRService] Extracted data from cached entities:', extractedData);
 
     return extractedData;
   }

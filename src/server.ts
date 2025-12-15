@@ -6,6 +6,7 @@ import path from 'path';
 import authRoutes from './routes/auth.routes';
 import verificationRoutes from './routes/verification.routes';
 import partnerRoutes from './routes/partner.routes';
+import adminRoutes from './routes/admin.routes';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/error-handler';
@@ -58,6 +59,7 @@ app.use('/api/v1', limiter);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/partners', partnerRoutes);
+app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1', verificationRoutes);
 
 app.get('/health', (_req, res) => {

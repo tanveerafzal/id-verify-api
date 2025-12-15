@@ -4,12 +4,22 @@ import { DocumentProcessorServiceClient } from '@google-cloud/documentai';
 import { DocumentQualityCheck, DocumentType } from '../types/verification.types';
 import { config } from '../config';
 
+// Document AI entity interface for caching extracted data
+export interface DocumentAiEntity {
+  type: string;
+  mentionText: string;
+  confidence?: number;
+  normalizedValue?: any;
+}
+
 // Document detection result interface
 export interface DocumentDetectionResult {
   documentType: DocumentType;
   confidence: number;
   detectedKeywords: string[];
   method: 'document_ai' | 'google_vision' | 'keyword_analysis' | 'fallback';
+  // Cached Document AI entities to avoid redundant API calls
+  documentAiEntities?: DocumentAiEntity[];
 }
 
 // Keywords and patterns for each document type
@@ -382,6 +392,18 @@ export class DocumentScannerService {
           return result;
         }
         console.log('[DocumentScannerService] Document AI confidence too low:', result.confidence);
+
+        // If Document AI returns 0 or very low confidence, fail immediately
+        // This indicates the document is unreadable or not a valid ID document
+        if (result.confidence < 0.1) {
+          console.log('[DocumentScannerService] Document AI confidence critically low - failing detection');
+          return {
+            documentType: DocumentType.OTHER,
+            confidence: 0,
+            detectedKeywords: [],
+            method: 'document_ai'
+          };
+        }
       }
 
       // Fall back to Google Vision for labels and text
@@ -483,6 +505,7 @@ export class DocumentScannerService {
       entityCount: number;
       processorName: string;
       detectedFields: string[];
+      entities: DocumentAiEntity[]; // Cache the entities for later use
     }> = [];
 
     // High confidence threshold - if user-selected type processor achieves this, use it immediately
@@ -512,6 +535,14 @@ export class DocumentScannerService {
 
           const detectedFields = meaningfulEntities.map(e => e.type || 'unknown');
 
+          // Cache the entities for later use in OCR extraction (avoid redundant API call)
+          const cachedEntities: DocumentAiEntity[] = meaningfulEntities.map(e => ({
+            type: e.type || 'unknown',
+            mentionText: e.mentionText || '',
+            confidence: e.confidence || undefined,
+            normalizedValue: e.normalizedValue || undefined
+          }));
+
           // Calculate confidence based on entity count and their confidence scores
           const avgConfidence = meaningfulEntities.reduce((sum, e) => sum + (e.confidence || 0), 0) / (meaningfulEntities.length || 1);
 
@@ -528,7 +559,8 @@ export class DocumentScannerService {
             confidence,
             entityCount: meaningfulEntities.length,
             processorName: processorConfig.name,
-            detectedFields
+            detectedFields,
+            entities: cachedEntities
           };
 
           results.push(result);
@@ -541,7 +573,8 @@ export class DocumentScannerService {
               documentType: result.documentType,
               confidence: result.confidence,
               detectedKeywords: result.detectedFields,
-              method: 'document_ai'
+              method: 'document_ai',
+              documentAiEntities: result.entities // Include cached entities
             };
           }
         } else {
@@ -596,7 +629,8 @@ export class DocumentScannerService {
       documentType: best.documentType,
       confidence: best.confidence,
       detectedKeywords: best.detectedFields,
-      method: 'document_ai'
+      method: 'document_ai',
+      documentAiEntities: best.entities // Include cached entities
     };
   }
 
