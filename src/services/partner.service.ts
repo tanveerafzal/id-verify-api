@@ -398,19 +398,25 @@ export class PartnerService {
     }
 
     // Generate pre-signed URLs for documents if S3 is enabled
+    logger.info(`[PartnerService] Getting verification ${verificationId}, found ${verification.documents.length} documents, S3 enabled: ${s3Service.isEnabled()}`);
+
     const documentsWithSignedUrls = await Promise.all(
       verification.documents.map(async (doc) => {
         let signedOriginalUrl = doc.originalUrl;
         let signedProcessedUrl = doc.processedUrl;
         let signedThumbnailUrl = doc.thumbnailUrl;
 
+        logger.info(`[PartnerService] Document ${doc.id}: type=${doc.type}, originalUrl=${doc.originalUrl ? 'present' : 'missing'}`);
+
         // Generate pre-signed URLs for S3 objects
         if (s3Service.isEnabled()) {
           try {
             if (doc.originalUrl) {
               const key = s3Service.extractKeyFromUrl(doc.originalUrl);
+              logger.info(`[PartnerService] Document ${doc.id}: extracted key=${key}`);
               if (key) {
                 signedOriginalUrl = await s3Service.getSignedUrl(key, 3600); // 1 hour expiry
+                logger.info(`[PartnerService] Document ${doc.id}: generated signed URL`);
               }
             }
             if (doc.processedUrl) {
