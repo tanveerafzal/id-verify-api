@@ -800,4 +800,68 @@ export class PartnerService {
 
     return partner;
   }
+
+  // Update verification user details (partner can only update their own verifications)
+  async updateVerificationDetails(
+    partnerId: string,
+    verificationId: string,
+    updates: { fullName?: string; email?: string; phone?: string }
+  ) {
+    try {
+      logger.info(`[PartnerService] Partner ${partnerId} updating verification ${verificationId} details:`, updates);
+
+      // Get verification with user
+      const verification = await prisma.verification.findUnique({
+        where: { id: verificationId },
+        include: { user: true }
+      });
+
+      if (!verification) {
+        throw new Error('Verification not found');
+      }
+
+      // Verify it belongs to this partner
+      if (verification.partnerId !== partnerId) {
+        throw new Error('Unauthorized: Verification does not belong to this partner');
+      }
+
+      if (!verification.user) {
+        throw new Error('Verification has no associated user');
+      }
+
+      // Build update object with only provided fields
+      const userUpdates: any = {};
+      if (updates.fullName !== undefined) userUpdates.fullName = updates.fullName;
+      if (updates.email !== undefined) userUpdates.email = updates.email;
+      if (updates.phone !== undefined) userUpdates.phone = updates.phone;
+
+      if (Object.keys(userUpdates).length === 0) {
+        throw new Error('No valid fields to update');
+      }
+
+      // Update the user record
+      const updatedUser = await prisma.user.update({
+        where: { id: verification.user.id },
+        data: {
+          ...userUpdates,
+          updatedAt: new Date()
+        }
+      });
+
+      logger.info(`[PartnerService] Verification ${verificationId} user details updated successfully`);
+
+      return {
+        success: true,
+        user: {
+          id: updatedUser.id,
+          fullName: updatedUser.fullName,
+          email: updatedUser.email,
+          phone: updatedUser.phone
+        }
+      };
+    } catch (error) {
+      logger.error('[PartnerService] Error updating verification details:', error);
+      throw error;
+    }
+  }
 }

@@ -565,4 +565,46 @@ export class AdminController {
       });
     }
   }
+
+  async updateVerificationDetails(req: AdminRequest, res: Response) {
+    try {
+      if (!req.admin) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authenticated'
+        });
+      }
+
+      const { id } = req.params;
+      const { fullName, email, phone } = req.body;
+
+      // Validate that at least one field is provided
+      if (!fullName && !email && !phone) {
+        return res.status(400).json({
+          success: false,
+          error: 'At least one field (fullName, email, or phone) must be provided'
+        });
+      }
+
+      const result = await adminService.updateVerificationDetails(id, req.admin.id, {
+        fullName,
+        email,
+        phone
+      });
+
+      logger.info(`[AdminController] Admin ${req.admin.email} updated verification ${id} details`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Verification details updated successfully',
+        data: result
+      });
+    } catch (error) {
+      logger.error('[AdminController] Update verification details error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update verification details'
+      });
+    }
+  }
 }

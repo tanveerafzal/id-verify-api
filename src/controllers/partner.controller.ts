@@ -590,4 +590,46 @@ export class PartnerController {
       });
     }
   }
+
+  async updateVerificationDetails(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      if (!req.partner) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authenticated'
+        });
+      }
+
+      const { verificationId } = req.params;
+      const { fullName, email, phone } = req.body;
+
+      // Validate that at least one field is provided
+      if (!fullName && !email && !phone) {
+        return res.status(400).json({
+          success: false,
+          error: 'At least one field (fullName, email, or phone) must be provided'
+        });
+      }
+
+      const result = await partnerService.updateVerificationDetails(req.partner.id, verificationId, {
+        fullName,
+        email,
+        phone
+      });
+
+      logger.info(`[PartnerController] Partner ${req.partner.email} updated verification ${verificationId} details`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Verification details updated successfully',
+        data: result
+      });
+    } catch (error) {
+      logger.error('[PartnerController] Update verification details error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update verification details'
+      });
+    }
+  }
 }

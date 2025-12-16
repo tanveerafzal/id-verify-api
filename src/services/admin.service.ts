@@ -816,6 +816,65 @@ export class AdminService {
     }
   }
 
+  // Update verification user details
+  async updateVerificationDetails(
+    verificationId: string,
+    adminId: string,
+    updates: { fullName?: string; email?: string; phone?: string }
+  ) {
+    try {
+      logger.info(`[AdminService] Admin ${adminId} updating verification ${verificationId} details:`, updates);
+
+      // Get verification with user
+      const verification = await prisma.verification.findUnique({
+        where: { id: verificationId },
+        include: { user: true }
+      });
+
+      if (!verification) {
+        throw new Error('Verification not found');
+      }
+
+      if (!verification.user) {
+        throw new Error('Verification has no associated user');
+      }
+
+      // Build update object with only provided fields
+      const userUpdates: any = {};
+      if (updates.fullName !== undefined) userUpdates.fullName = updates.fullName;
+      if (updates.email !== undefined) userUpdates.email = updates.email;
+      if (updates.phone !== undefined) userUpdates.phone = updates.phone;
+
+      if (Object.keys(userUpdates).length === 0) {
+        throw new Error('No valid fields to update');
+      }
+
+      // Update the user record
+      const updatedUser = await prisma.user.update({
+        where: { id: verification.user.id },
+        data: {
+          ...userUpdates,
+          updatedAt: new Date()
+        }
+      });
+
+      logger.info(`[AdminService] Verification ${verificationId} user details updated successfully`);
+
+      return {
+        success: true,
+        user: {
+          id: updatedUser.id,
+          fullName: updatedUser.fullName,
+          email: updatedUser.email,
+          phone: updatedUser.phone
+        }
+      };
+    } catch (error) {
+      logger.error('[AdminService] Error updating verification details:', error);
+      throw error;
+    }
+  }
+
   // Token management
   private generateToken(payload: { id: string; email: string; role: string }) {
     return jwt.sign(payload, config.server.jwtSecret, { expiresIn: '24h' });
