@@ -729,6 +729,423 @@ export class BiometricService {
     };
   }
 
+  /**
+   * Single-image anti-spoofing detection
+   * Detects if the selfie is a real face or a printed photo/screen
+   */
+  async performSingleImageLivenessCheck(imageBuffer: Buffer): Promise<LivenessCheckResult> {
+    console.log('[BiometricService] Performing single-image liveness check...');
+
+    const checks: Record<string, boolean | number> = {};
+    let totalScore = 0;
+    let checkCount = 0;
+
+    try {
+      // 1. Texture Analysis - Real skin has micro-texture, printed photos are smooth
+      const textureScore = await this.analyzeTextureForLiveness(imageBuffer);
+      checks.textureScore = textureScore;
+      checks.texturePass = textureScore > 0.4;
+      totalScore += textureScore;
+      checkCount++;
+      console.log(`[BiometricService] Texture analysis score: ${textureScore.toFixed(3)}`);
+
+      // 2. Color Distribution Analysis - Real skin has specific color patterns
+      const colorScore = await this.analyzeColorDistribution(imageBuffer);
+      checks.colorScore = colorScore;
+      checks.colorPass = colorScore > 0.5;
+      totalScore += colorScore;
+      checkCount++;
+      console.log(`[BiometricService] Color distribution score: ${colorScore.toFixed(3)}`);
+
+      // 3. Moiré Pattern Detection - Screens show moiré patterns
+      const moireScore = await this.detectMoirePatterns(imageBuffer);
+      checks.moireScore = moireScore;
+      checks.moirePass = moireScore > 0.6; // Higher score = less likely to be screen
+      totalScore += moireScore;
+      checkCount++;
+      console.log(`[BiometricService] Moiré detection score: ${moireScore.toFixed(3)}`);
+
+      // 4. Specular Reflection Analysis - Real faces have natural highlights
+      const reflectionScore = await this.analyzeSpecularReflections(imageBuffer);
+      checks.reflectionScore = reflectionScore;
+      checks.reflectionPass = reflectionScore > 0.3;
+      totalScore += reflectionScore;
+      checkCount++;
+      console.log(`[BiometricService] Specular reflection score: ${reflectionScore.toFixed(3)}`);
+
+      // 5. Focus/Depth Variation - Real 3D faces have depth, flat photos don't
+      const depthScore = await this.analyzeDepthVariation(imageBuffer);
+      checks.depthScore = depthScore;
+      checks.depthPass = depthScore > 0.4;
+      totalScore += depthScore;
+      checkCount++;
+      console.log(`[BiometricService] Depth variation score: ${depthScore.toFixed(3)}`);
+
+      // 6. Edge Analysis - Printed photos have sharp paper edges
+      const edgeScore = await this.analyzeEdgesForPrintedPhoto(imageBuffer);
+      checks.edgeScore = edgeScore;
+      checks.edgePass = edgeScore > 0.5;
+      totalScore += edgeScore;
+      checkCount++;
+      console.log(`[BiometricService] Edge analysis score: ${edgeScore.toFixed(3)}`);
+
+      // Calculate overall confidence
+      const confidence = checkCount > 0 ? totalScore / checkCount : 0;
+
+      // Count passed checks
+      const passedChecks = [
+        checks.texturePass,
+        checks.colorPass,
+        checks.moirePass,
+        checks.reflectionPass,
+        checks.depthPass,
+        checks.edgePass
+      ].filter(Boolean).length;
+
+      // Require at least 4 out of 6 checks to pass
+      const isLive = passedChecks >= 4 && confidence >= 0.5;
+
+      console.log(`[BiometricService] Liveness check result: isLive=${isLive}, confidence=${confidence.toFixed(3)}, passedChecks=${passedChecks}/6`);
+
+      return {
+        isLive,
+        confidence,
+        checks
+      };
+    } catch (error) {
+      console.error('[BiometricService] Liveness check error:', error);
+      return {
+        isLive: false,
+        confidence: 0,
+        checks: { error: 'Liveness check failed' }
+      };
+    }
+  }
+
+  /**
+   * Analyze texture for liveness - real skin has micro-variations
+   */
+  private async analyzeTextureForLiveness(imageBuffer: Buffer): Promise<number> {
+    const image = sharp(imageBuffer);
+    const grayscale = await image
+      .grayscale()
+      .resize(200, 200, { fit: 'inside' })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const pixels = grayscale.data;
+    const width = grayscale.info.width;
+    const height = grayscale.info.height;
+
+    // Calculate Local Binary Pattern (LBP) variance
+    // Real faces have higher texture variance
+    let lbpSum = 0;
+    let lbpSqSum = 0;
+    let count = 0;
+
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const center = pixels[y * width + x];
+        let lbp = 0;
+
+        // Calculate LBP for 8 neighbors
+        const neighbors = [
+          pixels[(y - 1) * width + (x - 1)],
+          pixels[(y - 1) * width + x],
+          pixels[(y - 1) * width + (x + 1)],
+          pixels[y * width + (x + 1)],
+          pixels[(y + 1) * width + (x + 1)],
+          pixels[(y + 1) * width + x],
+          pixels[(y + 1) * width + (x - 1)],
+          pixels[y * width + (x - 1)]
+        ];
+
+        for (let i = 0; i < 8; i++) {
+          if (neighbors[i] >= center) {
+            lbp |= (1 << i);
+          }
+        }
+
+        lbpSum += lbp;
+        lbpSqSum += lbp * lbp;
+        count++;
+      }
+    }
+
+    const mean = lbpSum / count;
+    const variance = (lbpSqSum / count) - (mean * mean);
+
+    // Normalize variance to 0-1 (higher variance = more likely real)
+    // Printed photos typically have variance < 1500, real faces > 2000
+    const normalizedScore = Math.min(1, variance / 4000);
+
+    return normalizedScore;
+  }
+
+  /**
+   * Analyze color distribution for skin tones
+   */
+  private async analyzeColorDistribution(imageBuffer: Buffer): Promise<number> {
+    const image = sharp(imageBuffer);
+    const { data, info } = await image
+      .resize(100, 100, { fit: 'inside' })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const pixels = data;
+    const channels = info.channels;
+
+    let skinPixels = 0;
+    let totalPixels = 0;
+    let colorVariance = 0;
+    let rSum = 0, gSum = 0, bSum = 0;
+
+    // Analyze each pixel
+    for (let i = 0; i < pixels.length; i += channels) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+
+      totalPixels++;
+      rSum += r;
+      gSum += g;
+      bSum += b;
+
+      // Check if pixel is in skin color range (YCbCr space approximation)
+      // Real skin has specific color characteristics
+      if (r > 95 && g > 40 && b > 20 &&
+          r > g && r > b &&
+          Math.abs(r - g) > 15 &&
+          r - Math.min(g, b) > 15) {
+        skinPixels++;
+      }
+    }
+
+    // Calculate color variance
+    const rMean = rSum / totalPixels;
+    const gMean = gSum / totalPixels;
+    const bMean = bSum / totalPixels;
+
+    for (let i = 0; i < pixels.length; i += channels) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+      colorVariance += Math.pow(r - rMean, 2) + Math.pow(g - gMean, 2) + Math.pow(b - bMean, 2);
+    }
+    colorVariance /= totalPixels;
+
+    // Skin ratio should be reasonable (20-80%)
+    const skinRatio = skinPixels / totalPixels;
+    const skinScore = skinRatio >= 0.2 && skinRatio <= 0.8 ? 1 : skinRatio >= 0.1 ? 0.5 : 0;
+
+    // Real faces have moderate color variance
+    // Printed photos often have less variance (washed out) or too much (over-saturated)
+    const varianceScore = colorVariance > 500 && colorVariance < 5000 ? 1 : colorVariance > 200 ? 0.5 : 0;
+
+    return (skinScore * 0.6 + varianceScore * 0.4);
+  }
+
+  /**
+   * Detect moiré patterns that indicate screen capture
+   */
+  private async detectMoirePatterns(imageBuffer: Buffer): Promise<number> {
+    const image = sharp(imageBuffer);
+    const grayscale = await image
+      .grayscale()
+      .resize(128, 128, { fit: 'inside' })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const pixels = grayscale.data;
+    const width = grayscale.info.width;
+    const height = grayscale.info.height;
+
+    // Calculate frequency domain characteristics
+    // Moiré patterns show up as periodic high-frequency components
+    let periodicScore = 0;
+    let totalChecks = 0;
+
+    // Check for periodic patterns in rows
+    for (let y = 0; y < height; y++) {
+      let transitions = 0;
+      for (let x = 1; x < width; x++) {
+        const diff = Math.abs(pixels[y * width + x] - pixels[y * width + x - 1]);
+        if (diff > 20) transitions++;
+      }
+      // High number of transitions might indicate moiré
+      if (transitions > width * 0.4) periodicScore++;
+      totalChecks++;
+    }
+
+    // Check for periodic patterns in columns
+    for (let x = 0; x < width; x++) {
+      let transitions = 0;
+      for (let y = 1; y < height; y++) {
+        const diff = Math.abs(pixels[y * width + x] - pixels[(y - 1) * width + x]);
+        if (diff > 20) transitions++;
+      }
+      if (transitions > height * 0.4) periodicScore++;
+      totalChecks++;
+    }
+
+    // Lower periodic score = less likely to be screen (inverse score)
+    const moireRatio = periodicScore / totalChecks;
+
+    // Return inverse - high score means no moiré detected (good)
+    return 1 - Math.min(1, moireRatio * 3);
+  }
+
+  /**
+   * Analyze specular reflections - real faces have natural highlights
+   */
+  private async analyzeSpecularReflections(imageBuffer: Buffer): Promise<number> {
+    const image = sharp(imageBuffer);
+    const { data, info } = await image
+      .resize(100, 100, { fit: 'inside' })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const pixels = data;
+    const channels = info.channels;
+    const totalPixels = info.width * info.height;
+
+    let highlightPixels = 0;
+    let midtonePixels = 0;
+    let shadowPixels = 0;
+
+    for (let i = 0; i < pixels.length; i += channels) {
+      const luminance = (pixels[i] * 0.299 + pixels[i + 1] * 0.587 + pixels[i + 2] * 0.114);
+
+      if (luminance > 200) highlightPixels++;
+      else if (luminance > 50) midtonePixels++;
+      else shadowPixels++;
+    }
+
+    // Real faces should have a good distribution with some highlights
+    const highlightRatio = highlightPixels / totalPixels;
+    const midtoneRatio = midtonePixels / totalPixels;
+
+    // Expect 2-15% highlights for natural lighting
+    const highlightScore = highlightRatio >= 0.02 && highlightRatio <= 0.15 ? 1 :
+                          highlightRatio > 0.01 && highlightRatio <= 0.25 ? 0.5 : 0;
+
+    // Expect majority midtones
+    const midtoneScore = midtoneRatio >= 0.5 ? 1 : midtoneRatio >= 0.3 ? 0.5 : 0;
+
+    return highlightScore * 0.6 + midtoneScore * 0.4;
+  }
+
+  /**
+   * Analyze depth variation - real 3D faces have focus differences
+   */
+  private async analyzeDepthVariation(imageBuffer: Buffer): Promise<number> {
+    const image = sharp(imageBuffer);
+    const grayscale = await image
+      .grayscale()
+      .resize(100, 100, { fit: 'inside' })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const pixels = grayscale.data;
+    const width = grayscale.info.width;
+    const height = grayscale.info.height;
+
+    // Calculate local sharpness in different regions
+    const regions = [
+      { x: 0, y: 0, w: width / 2, h: height / 2 },           // Top-left
+      { x: width / 2, y: 0, w: width / 2, h: height / 2 },   // Top-right
+      { x: 0, y: height / 2, w: width / 2, h: height / 2 },  // Bottom-left
+      { x: width / 2, y: height / 2, w: width / 2, h: height / 2 }, // Bottom-right
+      { x: width / 4, y: height / 4, w: width / 2, h: height / 2 }  // Center
+    ];
+
+    const sharpnessValues: number[] = [];
+
+    for (const region of regions) {
+      let gradientSum = 0;
+      let count = 0;
+
+      for (let y = Math.floor(region.y) + 1; y < Math.floor(region.y + region.h) - 1 && y < height - 1; y++) {
+        for (let x = Math.floor(region.x) + 1; x < Math.floor(region.x + region.w) - 1 && x < width - 1; x++) {
+          const gx = pixels[y * width + (x + 1)] - pixels[y * width + (x - 1)];
+          const gy = pixels[(y + 1) * width + x] - pixels[(y - 1) * width + x];
+          gradientSum += Math.sqrt(gx * gx + gy * gy);
+          count++;
+        }
+      }
+
+      if (count > 0) {
+        sharpnessValues.push(gradientSum / count);
+      }
+    }
+
+    if (sharpnessValues.length === 0) return 0.5;
+
+    // Calculate variance in sharpness across regions
+    // Real 3D faces have varying sharpness (nose sharp, ears softer)
+    const mean = sharpnessValues.reduce((a, b) => a + b, 0) / sharpnessValues.length;
+    const variance = sharpnessValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / sharpnessValues.length;
+
+    // Flat photos have uniform sharpness (low variance)
+    // Real faces have depth variation (moderate variance)
+    // Very high variance might indicate edge of printed photo
+    const normalizedVariance = Math.min(1, variance / 100);
+
+    return normalizedVariance > 0.1 && normalizedVariance < 0.8 ? normalizedVariance + 0.3 : normalizedVariance;
+  }
+
+  /**
+   * Analyze edges for signs of printed photo boundaries
+   */
+  private async analyzeEdgesForPrintedPhoto(imageBuffer: Buffer): Promise<number> {
+    const image = sharp(imageBuffer);
+    const grayscale = await image
+      .grayscale()
+      .resize(100, 100, { fit: 'inside' })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const pixels = grayscale.data;
+    const width = grayscale.info.width;
+    const height = grayscale.info.height;
+
+    // Check edges of the image for strong straight lines (paper edges)
+    let edgeStrength = 0;
+    let totalEdgePixels = 0;
+
+    // Check top and bottom edges
+    for (let x = 5; x < width - 5; x++) {
+      // Top edge
+      const topDiff = Math.abs(pixels[5 * width + x] - pixels[0 * width + x]);
+      if (topDiff > 50) edgeStrength++;
+      totalEdgePixels++;
+
+      // Bottom edge
+      const bottomDiff = Math.abs(pixels[(height - 6) * width + x] - pixels[(height - 1) * width + x]);
+      if (bottomDiff > 50) edgeStrength++;
+      totalEdgePixels++;
+    }
+
+    // Check left and right edges
+    for (let y = 5; y < height - 5; y++) {
+      // Left edge
+      const leftDiff = Math.abs(pixels[y * width + 5] - pixels[y * width + 0]);
+      if (leftDiff > 50) edgeStrength++;
+      totalEdgePixels++;
+
+      // Right edge
+      const rightDiff = Math.abs(pixels[y * width + (width - 6)] - pixels[y * width + (width - 1)]);
+      if (rightDiff > 50) edgeStrength++;
+      totalEdgePixels++;
+    }
+
+    // High edge strength at boundaries suggests printed photo
+    const edgeRatio = edgeStrength / totalEdgePixels;
+
+    // Return inverse - lower edge ratio is better (no paper edges visible)
+    return 1 - Math.min(1, edgeRatio * 4);
+  }
+
   private async detectBlink(frames: Buffer[]): Promise<boolean> {
     if (frames.length < 3) return false;
 

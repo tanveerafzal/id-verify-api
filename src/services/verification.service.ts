@@ -319,6 +319,26 @@ export class VerificationService {
       throw new Error('Multiple faces detected in selfie');
     }
 
+    // Perform liveness/anti-spoofing check
+    console.log('[VerificationService] Performing liveness check on selfie...');
+    const livenessResult = await this.biometricService.performSingleImageLivenessCheck(imageBuffer);
+
+    console.log('[VerificationService] Liveness check result:', {
+      isLive: livenessResult.isLive,
+      confidence: livenessResult.confidence,
+      passedChecks: Object.entries(livenessResult.checks || {})
+        .filter(([key, val]) => key.endsWith('Pass') && val === true)
+        .length
+    });
+
+    // Add liveness data to biometric result
+    const biometricDataWithLiveness = {
+      ...biometricData,
+      livenessCheck: livenessResult.isLive,
+      livenessScore: livenessResult.confidence,
+      livenessDetails: livenessResult.checks
+    };
+
     // Save selfie as a document in the Document table
     if (selfieUrl) {
       console.log('[VerificationService] Saving selfie as document:', selfieUrl);
@@ -355,7 +375,19 @@ export class VerificationService {
       }
     }
 
-    return biometricData;
+    // Store liveness result in verification metadata
+    await prisma.verification.update({
+      where: { id: verificationId },
+      data: {
+        metadata: {
+          livenessCheck: livenessResult.isLive,
+          livenessScore: livenessResult.confidence,
+          livenessDetails: livenessResult.checks
+        }
+      }
+    });
+
+    return biometricDataWithLiveness;
   }
 
   async performVerification(verificationId: string): Promise<VerificationResult> {
@@ -517,18 +549,30 @@ export class VerificationService {
       }
     }
 
+    // Get liveness check result from verification metadata
+    const metadata = verification.metadata as any || {};
+    const livenessCheck = metadata.livenessCheck ?? true; // Default to true if not set (for backwards compatibility)
+    const livenessScore = metadata.livenessScore ?? 1;
+
+    // Add liveness failure flag if check failed
+    if (!livenessCheck) {
+      flags.push('LIVENESS_CHECK_FAILED');
+      warnings.push('Selfie may not be a live person - possible photo or screen detected');
+    }
+
     const riskLevel = this.calculateRiskLevel(flags, documentChecks);
 
     // Check if name validation should affect pass/fail
     // Name mismatch only fails if requester name was provided and doesn't match
     const nameMismatchFailure = verification.user?.fullName ? !nameMatch : false;
 
-    // Include face match and name match in pass/fail decision
+    // Include face match, name match, AND liveness check in pass/fail decision
     const passed = flags.length === 0 &&
                    documentChecks.averageQuality >= config.verification.minQualityScore &&
                    !documentExpired &&
                    !documentTampered &&
-                   !nameMismatchFailure;
+                   !nameMismatchFailure &&
+                   livenessCheck; // Liveness must pass
 
     const result: VerificationResult = {
       passed,
@@ -541,7 +585,9 @@ export class VerificationService {
         faceMatch,
         faceMatchScore,
         nameMatch,
-        nameMatchScore
+        nameMatchScore,
+        livenessCheck,
+        livenessScore
       },
       extractedData,
       flags,
@@ -851,6 +897,11 @@ export class VerificationService {
     }
 
     if (flags.includes('NAME_MISMATCH')) {
+      return RiskLevel.CRITICAL;
+    }
+
+    // Liveness check failure is critical - possible spoofing attempt
+    if (flags.includes('LIVENESS_CHECK_FAILED')) {
       return RiskLevel.CRITICAL;
     }
 
