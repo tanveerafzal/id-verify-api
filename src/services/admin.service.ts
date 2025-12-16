@@ -4,7 +4,9 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import { s3Service } from './s3.service';
-import { emailService } from './email.service';
+import { EmailService } from './email.service';
+
+const emailService = new EmailService();
 
 const prisma = new PrismaClient();
 

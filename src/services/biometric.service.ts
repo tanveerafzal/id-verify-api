@@ -736,7 +736,7 @@ export class BiometricService {
   async performSingleImageLivenessCheck(imageBuffer: Buffer): Promise<LivenessCheckResult> {
     console.log('[BiometricService] Performing single-image liveness check...');
 
-    const checks: Record<string, boolean | number> = {};
+    const checks: LivenessCheckResult['checks'] = {};
     let totalScore = 0;
     let checkCount = 0;
 

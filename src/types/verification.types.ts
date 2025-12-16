@@ -85,9 +85,25 @@ export interface LivenessCheckResult {
   isLive: boolean;
   confidence: number;
   checks: {
+    // Video-based checks
     blinkDetected?: boolean;
     headMovement?: boolean;
     textureAnalysis?: boolean;
+    // Single-image anti-spoofing checks
+    textureScore?: number;
+    texturePass?: boolean;
+    colorScore?: number;
+    colorPass?: boolean;
+    moireScore?: number;
+    moirePass?: boolean;
+    reflectionScore?: number;
+    reflectionPass?: boolean;
+    depthScore?: number;
+    depthPass?: boolean;
+    edgeScore?: number;
+    edgePass?: boolean;
+    // Error handling
+    error?: string;
   };
 }
 
