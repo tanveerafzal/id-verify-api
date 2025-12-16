@@ -536,4 +536,33 @@ export class AdminController {
       });
     }
   }
+
+  async resendVerificationEmail(req: AdminRequest, res: Response) {
+    try {
+      if (!req.admin) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authenticated'
+        });
+      }
+
+      const { id } = req.params;
+
+      const result = await adminService.resendVerificationEmail(id, req.admin.id);
+
+      logger.info(`[AdminController] Admin ${req.admin.email} resent verification email for ${id}`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Verification email sent successfully',
+        data: result
+      });
+    } catch (error) {
+      logger.error('[AdminController] Resend verification email error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to resend email'
+      });
+    }
+  }
 }

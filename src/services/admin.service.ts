@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import { s3Service } from './s3.service';
+import { emailService } from './email.service';
 
 const prisma = new PrismaClient();
 
@@ -775,6 +776,44 @@ export class AdminService {
     logger.info(`[AdminService] Verification ${verificationId} manually failed by admin ${adminId}: ${reason}`);
 
     return updated;
+  }
+
+  // Resend verification email
+  async resendVerificationEmail(verificationId: string, adminId: string) {
+    try {
+      logger.info(`[AdminService] Admin ${adminId} resending email for verification: ${verificationId}`);
+
+      // Get verification with user
+      const verification = await prisma.verification.findUnique({
+        where: { id: verificationId },
+        include: { user: true }
+      });
+
+      if (!verification) {
+        throw new Error('Verification not found');
+      }
+
+      if (!verification.user) {
+        throw new Error('Verification missing user information');
+      }
+
+      // Generate verification link
+      const verificationLink = `${config.server.frontendUrl}/verify?verificationId=${verification.id}`;
+
+      // Send email
+      await emailService.sendVerificationEmail(
+        verification.user.email,
+        verification.user.fullName || 'User',
+        verificationLink
+      );
+
+      logger.info(`[AdminService] Email resent successfully to: ${verification.user.email}`);
+
+      return { success: true, email: verification.user.email };
+    } catch (error) {
+      logger.error('[AdminService] Error resending email:', error);
+      throw error;
+    }
   }
 
   // Token management

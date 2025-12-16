@@ -32,5 +32,6 @@ router.get('/verifications', adminAuthMiddleware, controller.getVerifications.bi
 router.get('/verifications/:id', adminAuthMiddleware, controller.getVerificationById.bind(controller));
 router.post('/verifications/:id/manual-pass', adminAuthMiddleware, controller.manualPassVerification.bind(controller));
 router.post('/verifications/:id/manual-fail', adminAuthMiddleware, controller.manualFailVerification.bind(controller));
+router.post('/verifications/:id/resend-email', adminAuthMiddleware, controller.resendVerificationEmail.bind(controller));
 
 export default router;
