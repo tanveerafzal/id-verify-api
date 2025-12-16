@@ -138,8 +138,9 @@ export class S3Service {
 
   /**
    * Get a pre-signed URL for temporary access to a private file
+   * Default expiration increased to 8 hours to prevent URLs expiring during dashboard sessions
    */
-  async getSignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+  async getSignedUrl(key: string, expiresIn: number = 28800): Promise<string> {
     if (!this.isConfigured || !this.client) {
       throw new Error('S3 is not configured');
     }

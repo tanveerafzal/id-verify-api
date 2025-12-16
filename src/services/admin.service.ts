@@ -564,25 +564,25 @@ export class AdminService {
         let signedProcessedUrl = doc.processedUrl;
         let signedThumbnailUrl = doc.thumbnailUrl;
 
-        // Generate pre-signed URLs for S3 objects
+        // Generate pre-signed URLs for S3 objects (8 hour expiry for dashboard sessions)
         if (s3Service.isEnabled()) {
           try {
             if (doc.originalUrl) {
               const key = s3Service.extractKeyFromUrl(doc.originalUrl);
               if (key) {
-                signedOriginalUrl = await s3Service.getSignedUrl(key, 3600); // 1 hour expiry
+                signedOriginalUrl = await s3Service.getSignedUrl(key);
               }
             }
             if (doc.processedUrl) {
               const key = s3Service.extractKeyFromUrl(doc.processedUrl);
               if (key) {
-                signedProcessedUrl = await s3Service.getSignedUrl(key, 3600);
+                signedProcessedUrl = await s3Service.getSignedUrl(key);
               }
             }
             if (doc.thumbnailUrl) {
               const key = s3Service.extractKeyFromUrl(doc.thumbnailUrl);
               if (key) {
-                signedThumbnailUrl = await s3Service.getSignedUrl(key, 3600);
+                signedThumbnailUrl = await s3Service.getSignedUrl(key);
               }
             }
           } catch (error) {
