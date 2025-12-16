@@ -89,8 +89,10 @@ export class S3Service {
 
       await this.client.send(command);
 
-      // Generate the public URL
-      const url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
+      // Generate the public URL with properly encoded key
+      // Encode each path segment separately to preserve slashes
+      const encodedKey = key.split('/').map(segment => encodeURIComponent(segment)).join('/');
+      const url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${encodedKey}`;
 
       logger.info(`[S3Service] File uploaded successfully: ${key}`);
 
@@ -194,13 +196,20 @@ export class S3Service {
 
   /**
    * Get the S3 key from a full URL
+   * Handles both encoded and unencoded URLs for backward compatibility
    */
   extractKeyFromUrl(url: string): string | null {
     try {
-      const urlObj = new URL(url);
-      // Remove leading slash
-      return urlObj.pathname.substring(1);
-    } catch {
+      // First, try to encode any unencoded special characters in the URL
+      // This handles URLs that were stored without proper encoding
+      const safeUrl = url.replace(/'/g, '%27').replace(/ /g, '%20');
+      const urlObj = new URL(safeUrl);
+      // Remove leading slash and decode the path to get the actual S3 key
+      const path = urlObj.pathname.substring(1);
+      // Decode URI components to get the actual key as stored in S3
+      return decodeURIComponent(path);
+    } catch (error) {
+      logger.error(`[S3Service] Failed to extract key from URL: ${url}`, error);
       return null;
     }
   }
