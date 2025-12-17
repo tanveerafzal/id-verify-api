@@ -84,9 +84,73 @@ export class VerificationService {
       throw new Error('Verification not found');
     }
 
-    // Delete existing documents of the same type/side to keep only the latest
-    // This handles both retry scenarios and re-uploads
-    if (documentType) {
+    // Check if this is a retry (verification was FAILED)
+    const isRetry = verification.status === 'FAILED';
+
+    if (isRetry) {
+      console.log('[VerificationService] Retry detected - clearing ALL old ID documents and verification result');
+
+      // On retry, delete ALL old ID documents (not just matching types)
+      // This ensures we start fresh with the new document and don't mix old/new data
+      const validIdTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'VOTER_ID'];
+      const oldIdDocs = verification.documents.filter(doc => validIdTypes.includes(doc.type));
+
+      if (oldIdDocs.length > 0) {
+        console.log(`[VerificationService] Deleting ${oldIdDocs.length} old ID document(s) from previous attempt`);
+
+        for (const doc of oldIdDocs) {
+          // Delete from S3 if URL exists
+          if (doc.originalUrl && doc.originalUrl !== 'not-saved') {
+            try {
+              const key = s3Service.extractKeyFromUrl(doc.originalUrl);
+              if (key && s3Service.isEnabled()) {
+                await s3Service.deleteFile(key);
+                console.log(`[VerificationService] Deleted old document from S3: ${key}`);
+              }
+            } catch (err) {
+              console.error('[VerificationService] Failed to delete old document from S3:', err);
+            }
+          }
+
+          // Delete from database
+          await prisma.document.delete({
+            where: { id: doc.id }
+          });
+        }
+      }
+
+      // Clear old verification result data
+      const existingResult = await prisma.verificationResult.findUnique({
+        where: { verificationId }
+      });
+
+      if (existingResult) {
+        console.log('[VerificationService] Clearing old verification result extracted data');
+        await prisma.verificationResult.update({
+          where: { verificationId },
+          data: {
+            extractedData: {},
+            extractedName: null,
+            extractedDob: null,
+            extractedAddress: null,
+            documentNumber: null,
+            issuingCountry: null,
+            expiryDate: null,
+            flags: [],
+            warnings: []
+          }
+        });
+      }
+
+      // Reset verification status to allow re-processing
+      await prisma.verification.update({
+        where: { id: verificationId },
+        data: { status: 'PENDING' }
+      });
+
+      console.log('[VerificationService] Old data cleared, ready for new document');
+    } else if (documentType) {
+      // Not a retry - just delete matching documents of the same type/side
       const existingDocs = verification.documents.filter(doc => {
         // For documents with sides (like driver's license), match type AND side
         if (side) {
@@ -121,17 +185,6 @@ export class VerificationService {
 
         console.log('[VerificationService] Old documents cleared');
       }
-    }
-
-    // If this is a retry (verification was FAILED), also clear the old verification result
-    if (verification.status === 'FAILED') {
-      console.log('[VerificationService] Retry detected - resetting verification status');
-
-      // Reset verification status to allow re-processing
-      await prisma.verification.update({
-        where: { id: verificationId },
-        data: { status: 'PENDING' }
-      });
     }
 
     const preprocessed = await this.documentScanner.preprocessImage(imageBuffer);
@@ -352,11 +405,27 @@ export class VerificationService {
       });
 
       if (existingSelfie) {
+        // Delete old selfie from S3 if it exists and is different from new one
+        if (existingSelfie.originalUrl &&
+            existingSelfie.originalUrl !== 'not-saved' &&
+            existingSelfie.originalUrl !== selfieUrl) {
+          try {
+            const oldKey = s3Service.extractKeyFromUrl(existingSelfie.originalUrl);
+            if (oldKey && s3Service.isEnabled()) {
+              await s3Service.deleteFile(oldKey);
+              console.log('[VerificationService] Deleted old selfie from S3:', oldKey);
+            }
+          } catch (err) {
+            console.error('[VerificationService] Failed to delete old selfie from S3:', err);
+          }
+        }
+
         // Update existing selfie document
         await prisma.document.update({
           where: { id: existingSelfie.id },
           data: {
             originalUrl: selfieUrl,
+            qualityScore: biometricData.faceQuality || null,
             updatedAt: new Date()
           }
         });
@@ -737,24 +806,40 @@ export class VerificationService {
 
     console.log('[VerificationService] Merging extracted data from', documents.length, 'documents');
 
-    for (const doc of documents) {
+    // Sort documents by updatedAt/createdAt descending (newest first)
+    // This ensures the newest document's data takes priority
+    const sortedDocs = [...documents].sort((a, b) => {
+      const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
+
+    // Filter to only include ID documents (exclude selfies from data extraction)
+    const idDocTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'VOTER_ID'];
+    const idDocs = sortedDocs.filter(doc => idDocTypes.includes(doc.type));
+
+    console.log('[VerificationService] Processing', idDocs.length, 'ID documents (sorted by date, newest first)');
+
+    // Process newest documents first - their data takes priority
+    for (const doc of idDocs) {
       if (doc.extractedData) {
         const data = typeof doc.extractedData === 'string'
           ? JSON.parse(doc.extractedData)
           : doc.extractedData;
 
-        console.log('[VerificationService] Document', doc.id, 'type:', doc.type, 'extractedData:', JSON.stringify(data, null, 2));
+        console.log('[VerificationService] Document', doc.id, 'type:', doc.type,
+          'updated:', doc.updatedAt || doc.createdAt,
+          'extractedData keys:', Object.keys(data).filter(k => data[k] !== null && data[k] !== undefined));
 
-        // Merge only non-null/undefined values to avoid overwriting good data with empty values
+        // Merge only non-null/undefined values
         for (const [key, value] of Object.entries(data)) {
           if (value !== null && value !== undefined && value !== '') {
-            // Don't overwrite existing values with detection metadata
+            // Skip detection metadata
             if (key === 'autoDetected' || key === 'detectionConfidence' || key === 'detectionMethod' || key === 'detectedKeywords') {
               continue;
             }
-            // Only overwrite if current value is empty or new value has higher confidence
-            if (!merged[key as keyof ExtractedDocumentData] ||
-                (key === 'confidence' && (value as number) > (merged.confidence || 0))) {
+            // Since we process newest first, always use the first (newest) non-empty value
+            if (!merged[key as keyof ExtractedDocumentData]) {
               (merged as any)[key] = value;
             }
           }
