@@ -818,6 +818,58 @@ export class AdminService {
     }
   }
 
+  // Update verification retry count
+  async updateRetryCount(
+    verificationId: string,
+    adminId: string,
+    retryCount: number
+  ) {
+    try {
+      logger.info(`[AdminService] Admin ${adminId} updating retry count for verification ${verificationId} to ${retryCount}`);
+
+      const verification = await prisma.verification.findUnique({
+        where: { id: verificationId }
+      });
+
+      if (!verification) {
+        throw new Error('Verification not found');
+      }
+
+      // Validate retry count
+      if (retryCount < 0) {
+        throw new Error('Retry count cannot be negative');
+      }
+
+      if (retryCount > verification.maxRetries) {
+        throw new Error(`Retry count cannot exceed max retries (${verification.maxRetries})`);
+      }
+
+      const updated = await prisma.verification.update({
+        where: { id: verificationId },
+        data: {
+          retryCount,
+          // If retry count is reset to less than max, and status is FAILED, set back to PENDING
+          status: retryCount < verification.maxRetries && verification.status === 'FAILED'
+            ? 'PENDING'
+            : verification.status,
+          updatedAt: new Date()
+        }
+      });
+
+      logger.info(`[AdminService] Retry count updated successfully for verification ${verificationId}`);
+
+      return {
+        success: true,
+        retryCount: updated.retryCount,
+        maxRetries: updated.maxRetries,
+        status: updated.status
+      };
+    } catch (error) {
+      logger.error('[AdminService] Error updating retry count:', error);
+      throw error;
+    }
+  }
+
   // Update verification user details
   async updateVerificationDetails(
     verificationId: string,

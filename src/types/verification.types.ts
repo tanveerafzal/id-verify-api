@@ -102,6 +102,12 @@ export interface LivenessCheckResult {
     depthPass?: boolean;
     edgeScore?: number;
     edgePass?: boolean;
+    // Print artifact detection
+    printArtifactScore?: number;
+    printArtifactPass?: boolean;
+    // Reflection uniformity (glossy paper detection)
+    reflectionUniformityScore?: number;
+    reflectionUniformityPass?: boolean;
     // Error handling
     error?: string;
   };

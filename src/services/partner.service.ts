@@ -864,4 +864,61 @@ export class PartnerService {
       throw error;
     }
   }
+
+  // Update verification retry count (partner can only update their own verifications)
+  async updateRetryCount(
+    partnerId: string,
+    verificationId: string,
+    retryCount: number
+  ) {
+    try {
+      logger.info(`[PartnerService] Partner ${partnerId} updating retry count for verification ${verificationId} to ${retryCount}`);
+
+      const verification = await prisma.verification.findUnique({
+        where: { id: verificationId }
+      });
+
+      if (!verification) {
+        throw new Error('Verification not found');
+      }
+
+      // Verify it belongs to this partner
+      if (verification.partnerId !== partnerId) {
+        throw new Error('Unauthorized: Verification does not belong to this partner');
+      }
+
+      // Validate retry count
+      if (retryCount < 0) {
+        throw new Error('Retry count cannot be negative');
+      }
+
+      if (retryCount > verification.maxRetries) {
+        throw new Error(`Retry count cannot exceed max retries (${verification.maxRetries})`);
+      }
+
+      const updated = await prisma.verification.update({
+        where: { id: verificationId },
+        data: {
+          retryCount,
+          // If retry count is reset to less than max, and status is FAILED, set back to PENDING
+          status: retryCount < verification.maxRetries && verification.status === 'FAILED'
+            ? 'PENDING'
+            : verification.status,
+          updatedAt: new Date()
+        }
+      });
+
+      logger.info(`[PartnerService] Retry count updated successfully for verification ${verificationId}`);
+
+      return {
+        success: true,
+        retryCount: updated.retryCount,
+        maxRetries: updated.maxRetries,
+        status: updated.status
+      };
+    } catch (error) {
+      logger.error('[PartnerService] Error updating retry count:', error);
+      throw error;
+    }
+  }
 }

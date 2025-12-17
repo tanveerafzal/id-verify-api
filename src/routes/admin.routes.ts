@@ -34,5 +34,6 @@ router.post('/verifications/:id/manual-pass', adminAuthMiddleware, controller.ma
 router.post('/verifications/:id/manual-fail', adminAuthMiddleware, controller.manualFailVerification.bind(controller));
 router.post('/verifications/:id/resend-email', adminAuthMiddleware, controller.resendVerificationEmail.bind(controller));
 router.put('/verifications/:id/details', adminAuthMiddleware, controller.updateVerificationDetails.bind(controller));
+router.put('/verifications/:id/retry-count', adminAuthMiddleware, controller.updateRetryCount.bind(controller));
 
 export default router;

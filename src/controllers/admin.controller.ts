@@ -607,4 +607,41 @@ export class AdminController {
       });
     }
   }
+
+  async updateRetryCount(req: AdminRequest, res: Response) {
+    try {
+      if (!req.admin) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authenticated'
+        });
+      }
+
+      const { id } = req.params;
+      const { retryCount } = req.body;
+
+      if (typeof retryCount !== 'number') {
+        return res.status(400).json({
+          success: false,
+          error: 'retryCount must be a number'
+        });
+      }
+
+      const result = await adminService.updateRetryCount(id, req.admin.id, retryCount);
+
+      logger.info(`[AdminController] Admin ${req.admin.email} updated retry count for ${id} to ${retryCount}`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Retry count updated successfully',
+        data: result
+      });
+    } catch (error) {
+      logger.error('[AdminController] Update retry count error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update retry count'
+      });
+    }
+  }
 }

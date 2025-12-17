@@ -25,5 +25,6 @@ router.get('/verifications/:verificationId', partnerAuthMiddleware, controller.g
 router.post('/verifications/request', partnerAuthMiddleware, controller.requestVerification.bind(controller));
 router.post('/verifications/:verificationId/resend-email', partnerAuthMiddleware, controller.resendVerificationEmail.bind(controller));
 router.put('/verifications/:verificationId/details', partnerAuthMiddleware, controller.updateVerificationDetails.bind(controller));
+router.put('/verifications/:verificationId/retry-count', partnerAuthMiddleware, controller.updateRetryCount.bind(controller));
 
 export default router;
