@@ -21,8 +21,7 @@ model User {
 
 model Partner {
   id                String         @id @default(uuid())
-  email             String         @unique
-  password          String
+  contactEmail      String?
   companyName       String
   contactName       String
   phone             String?
@@ -36,14 +35,45 @@ model Partner {
   address           String?
   logoUrl           String?
   website           String?
-  resetToken        String?
-  resetTokenExpiry  DateTime?
   tier              Tier           @relation(fields: [tierId], references: [id])
   verifications     Verification[] @relation("PartnerVerifications")
+  users             PartnerUser[]
 
-  @@index([email])
   @@index([apiKey])
   @@index([tierId])
+}
+
+model Role {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  description String?
+  permissions Json          @default("[]")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  users       PartnerUser[]
+}
+
+model PartnerUser {
+  id               String    @id @default(uuid())
+  partnerId        String
+  roleId           String
+  email            String    @unique
+  name             String
+  password         String
+  status           String    @default("active")
+  lastLogin        DateTime?
+  invitedBy        String?
+  invitedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  partner          Partner   @relation(fields: [partnerId], references: [id])
+  role             Role      @relation(fields: [roleId], references: [id])
+
+  @@index([email])
+  @@index([partnerId])
+  @@index([roleId])
 }
 
 model Tier {

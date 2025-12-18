@@ -755,29 +755,39 @@ export class VerificationService {
       const verificationWithDetails = await prisma.verification.findUnique({
         where: { id: verificationId },
         include: {
-          partner: true,
+          partner: {
+            include: {
+              users: {
+                take: 1,
+                orderBy: { createdAt: 'asc' }
+              }
+            }
+          },
           user: true
         }
       });
 
       if (verificationWithDetails?.partner) {
-        logger.info(`[VerificationService] Sending completion email to partner: ${verificationWithDetails.partner.email}`);
+        const partnerEmail = verificationWithDetails.partner.users[0]?.email;
+        if (partnerEmail) {
+          logger.info(`[VerificationService] Sending completion email to partner: ${partnerEmail}`);
 
-        await this.emailService.sendVerificationCompleteEmail(
-          verificationWithDetails.partner.email,
-          verificationWithDetails.partner.companyName,
-          verificationWithDetails.user?.fullName || 'User',
-          verificationWithDetails.user?.email || 'Unknown',
-          {
-            passed: result.passed,
-            score: result.score,
-            riskLevel: result.riskLevel,
-            extractedData: result.extractedData,
-            flags: result.flags
-          }
-        );
+          await this.emailService.sendVerificationCompleteEmail(
+            partnerEmail,
+            verificationWithDetails.partner.companyName,
+            verificationWithDetails.user?.fullName || 'User',
+            verificationWithDetails.user?.email || 'Unknown',
+            {
+              passed: result.passed,
+              score: result.score,
+              riskLevel: result.riskLevel,
+              extractedData: result.extractedData,
+              flags: result.flags
+            }
+          );
 
-        logger.info(`[VerificationService] Partner notification email sent successfully`);
+          logger.info(`[VerificationService] Partner notification email sent successfully`);
+        }
       }
     } catch (emailError) {
       // Log error but don't fail the verification

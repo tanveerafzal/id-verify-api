@@ -20,12 +20,12 @@ interface RegisterPartnerData {
 
 export class PartnerService {
   async registerPartner(data: RegisterPartnerData) {
-    // Check if partner already exists
-    const existingPartner = await prisma.partner.findUnique({
+    // Check if user with this email already exists
+    const existingUser = await prisma.partnerUser.findUnique({
       where: { email: data.email }
     });
 
-    if (existingPartner) {
+    if (existingUser) {
       throw new Error('Partner with this email already exists');
     }
 
@@ -39,14 +39,26 @@ export class PartnerService {
       freeTier = await this.initializeTiers();
     }
 
+    // Get or create admin role
+    let adminRole = await prisma.role.findUnique({
+      where: { name: 'admin' }
+    });
+
+    if (!adminRole) {
+      adminRole = await prisma.role.create({
+        data: {
+          name: 'admin',
+          permissions: JSON.stringify(['all'])
+        }
+      });
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Create partner with Free tier
+    // Create partner first
     const partner = await prisma.partner.create({
       data: {
-        email: data.email,
-        password: hashedPassword,
         companyName: data.companyName,
         contactName: data.contactName,
         phone: data.phone,
@@ -57,17 +69,29 @@ export class PartnerService {
       }
     });
 
+    // Create partner user for authentication
+    const partnerUser = await prisma.partnerUser.create({
+      data: {
+        partnerId: partner.id,
+        roleId: adminRole.id,
+        email: data.email,
+        name: data.contactName,
+        password: hashedPassword
+      }
+    });
+
     // Generate JWT token
     const token = this.generateToken({
       id: partner.id,
-      email: partner.email,
+      odoo: partnerUser.id,
+      email: partnerUser.email,
       companyName: partner.companyName
     });
 
     return {
       partner: {
         id: partner.id,
-        email: partner.email,
+        email: partnerUser.email,
         companyName: partner.companyName,
         contactName: partner.contactName,
         phone: partner.phone,
@@ -80,40 +104,56 @@ export class PartnerService {
   }
 
   async loginPartner(email: string, password: string) {
-    const partner = await prisma.partner.findUnique({
+    // Find user by email
+    const partnerUser = await prisma.partnerUser.findUnique({
       where: { email },
       include: {
-        tier: true
+        partner: {
+          include: {
+            tier: true
+          }
+        }
       }
     });
 
-    if (!partner || !partner.isActive) {
+    if (!partnerUser || partnerUser.status !== 'active') {
       return null;
     }
 
-    const isValidPassword = await bcrypt.compare(password, partner.password);
+    if (!partnerUser.partner.isActive) {
+      return null;
+    }
+
+    const isValidPassword = await bcrypt.compare(password, partnerUser.password);
 
     if (!isValidPassword) {
       return null;
     }
 
+    // Update last login
+    await prisma.partnerUser.update({
+      where: { id: partnerUser.id },
+      data: { lastLogin: new Date() }
+    });
+
     const token = this.generateToken({
-      id: partner.id,
-      email: partner.email,
-      companyName: partner.companyName
+      id: partnerUser.partner.id,
+      odoo: partnerUser.id,
+      email: partnerUser.email,
+      companyName: partnerUser.partner.companyName
     });
 
     return {
       partner: {
-        id: partner.id,
-        email: partner.email,
-        companyName: partner.companyName,
-        contactName: partner.contactName,
-        phone: partner.phone,
-        tier: partner.tier,
-        apiKey: partner.apiKey,
-        verificationsUsed: partner.verificationsUsed,
-        createdAt: partner.createdAt
+        id: partnerUser.partner.id,
+        email: partnerUser.email,
+        companyName: partnerUser.partner.companyName,
+        contactName: partnerUser.partner.contactName,
+        phone: partnerUser.partner.phone,
+        tier: partnerUser.partner.tier,
+        apiKey: partnerUser.partner.apiKey,
+        verificationsUsed: partnerUser.partner.verificationsUsed,
+        createdAt: partnerUser.partner.createdAt
       },
       token
     };
@@ -123,7 +163,11 @@ export class PartnerService {
     const partner = await prisma.partner.findUnique({
       where: { id: partnerId },
       include: {
-        tier: true
+        tier: true,
+        users: {
+          take: 1,
+          orderBy: { createdAt: 'asc' }
+        }
       }
     });
 
@@ -131,9 +175,11 @@ export class PartnerService {
       return null;
     }
 
+    const primaryUser = partner.users[0];
+
     return {
       id: partner.id,
-      email: partner.email,
+      email: primaryUser?.email || '',
       companyName: partner.companyName,
       contactName: partner.contactName,
       phone: partner.phone,
@@ -169,13 +215,19 @@ export class PartnerService {
         address: data.address
       },
       include: {
-        tier: true
+        tier: true,
+        users: {
+          take: 1,
+          orderBy: { createdAt: 'asc' }
+        }
       }
     });
 
+    const primaryUser = updatedPartner.users[0];
+
     return {
       id: updatedPartner.id,
-      email: updatedPartner.email,
+      email: primaryUser?.email || '',
       companyName: updatedPartner.companyName,
       contactName: updatedPartner.contactName,
       phone: updatedPartner.phone,
@@ -193,15 +245,17 @@ export class PartnerService {
   }
 
   async changePassword(partnerId: string, currentPassword: string, newPassword: string) {
-    const partner = await prisma.partner.findUnique({
-      where: { id: partnerId }
+    // Find the primary user for this partner
+    const partnerUser = await prisma.partnerUser.findFirst({
+      where: { partnerId },
+      orderBy: { createdAt: 'asc' }
     });
 
-    if (!partner) {
-      throw new Error('Partner not found');
+    if (!partnerUser) {
+      throw new Error('Partner user not found');
     }
 
-    const isValidPassword = await bcrypt.compare(currentPassword, partner.password);
+    const isValidPassword = await bcrypt.compare(currentPassword, partnerUser.password);
 
     if (!isValidPassword) {
       throw new Error('Current password is incorrect');
@@ -209,12 +263,12 @@ export class PartnerService {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await prisma.partner.update({
-      where: { id: partnerId },
+    await prisma.partnerUser.update({
+      where: { id: partnerUser.id },
       data: { password: hashedPassword }
     });
 
-    logger.info(`[PartnerService] Password changed for partner: ${partner.email}`);
+    logger.info(`[PartnerService] Password changed for partner user: ${partnerUser.email}`);
 
     return { success: true };
   }
@@ -555,7 +609,7 @@ export class PartnerService {
         throw new Error('Partner not found');
       }
 
-      logger.info(`[PartnerService] Partner found: ${partner.email}`);
+      logger.info(`[PartnerService] Partner found: ${partner.companyName} (${partnerId})`);
 
       // Check if user exists, create if not
       let user = await prisma.user.findUnique({
@@ -684,13 +738,14 @@ export class PartnerService {
     try {
       logger.info(`[PartnerService] Forgot password request for: ${email}`);
 
-      const partner = await prisma.partner.findUnique({
-        where: { email }
+      const partnerUser = await prisma.partnerUser.findUnique({
+        where: { email },
+        include: { partner: true }
       });
 
-      if (!partner) {
+      if (!partnerUser) {
         // Don't reveal if email exists or not for security
-        logger.info(`[PartnerService] Partner not found for email: ${email}`);
+        logger.info(`[PartnerService] Partner user not found for email: ${email}`);
         return { success: true, message: 'If an account exists with this email, a reset link has been sent.' };
       }
 
@@ -699,8 +754,8 @@ export class PartnerService {
       const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
       // Save token to database
-      await prisma.partner.update({
-        where: { id: partner.id },
+      await prisma.partnerUser.update({
+        where: { id: partnerUser.id },
         data: {
           resetToken,
           resetTokenExpiry
@@ -712,8 +767,8 @@ export class PartnerService {
 
       // Send reset email
       await emailService.sendPasswordResetEmail(
-        partner.email,
-        partner.contactName,
+        partnerUser.email,
+        partnerUser.partner.contactName,
         resetLink
       );
 
@@ -730,7 +785,7 @@ export class PartnerService {
     try {
       logger.info(`[PartnerService] Reset password attempt with token`);
 
-      const partner = await prisma.partner.findFirst({
+      const partnerUser = await prisma.partnerUser.findFirst({
         where: {
           resetToken: token,
           resetTokenExpiry: {
@@ -739,7 +794,7 @@ export class PartnerService {
         }
       });
 
-      if (!partner) {
+      if (!partnerUser) {
         logger.info(`[PartnerService] Invalid or expired reset token`);
         throw new Error('Invalid or expired reset token');
       }
@@ -748,8 +803,8 @@ export class PartnerService {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       // Update password and clear reset token
-      await prisma.partner.update({
-        where: { id: partner.id },
+      await prisma.partnerUser.update({
+        where: { id: partnerUser.id },
         data: {
           password: hashedPassword,
           resetToken: null,
@@ -757,7 +812,7 @@ export class PartnerService {
         }
       });
 
-      logger.info(`[PartnerService] Password reset successful for: ${partner.email}`);
+      logger.info(`[PartnerService] Password reset successful for: ${partnerUser.email}`);
 
       return { success: true, message: 'Password has been reset successfully' };
     } catch (error) {
@@ -766,7 +821,7 @@ export class PartnerService {
     }
   }
 
-  private generateToken(payload: { id: string; email: string; companyName: string }) {
+  private generateToken(payload: { id: string; odoo?: string; email: string; companyName: string }) {
     return jwt.sign(payload, config.server.jwtSecret, { expiresIn: '7d' });
   }
 
@@ -774,6 +829,7 @@ export class PartnerService {
     try {
       return jwt.verify(token, config.server.jwtSecret) as {
         id: string;
+        odoo?: string;
         email: string;
         companyName: string;
       };

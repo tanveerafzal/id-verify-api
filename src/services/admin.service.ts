@@ -238,8 +238,8 @@ export class AdminService {
     if (options?.search) {
       where.OR = [
         { companyName: { contains: options.search, mode: 'insensitive' } },
-        { email: { contains: options.search, mode: 'insensitive' } },
-        { contactName: { contains: options.search, mode: 'insensitive' } }
+        { contactName: { contains: options.search, mode: 'insensitive' } },
+        { users: { some: { email: { contains: options.search, mode: 'insensitive' } } } }
       ];
     }
 
@@ -257,7 +257,7 @@ export class AdminService {
     const [partners, total] = await Promise.all([
       prisma.partner.findMany({
         where,
-        include: { tier: true },
+        include: { tier: true, users: { take: 1, orderBy: { createdAt: 'asc' } } },
         orderBy,
         take: options?.limit || 100,
         skip: options?.offset || 0
@@ -268,7 +268,7 @@ export class AdminService {
     return {
       partners: partners.map(p => ({
         id: p.id,
-        email: p.email,
+        email: p.users[0]?.email || '',
         companyName: p.companyName,
         contactName: p.contactName,
         phone: p.phone,
@@ -287,7 +287,7 @@ export class AdminService {
   async getPartnerById(partnerId: string) {
     const partner = await prisma.partner.findUnique({
       where: { id: partnerId },
-      include: { tier: true }
+      include: { tier: true, users: { take: 1, orderBy: { createdAt: 'asc' } } }
     });
 
     if (!partner) {
@@ -296,7 +296,7 @@ export class AdminService {
 
     return {
       id: partner.id,
-      email: partner.email,
+      email: partner.users[0]?.email || '',
       companyName: partner.companyName,
       contactName: partner.contactName,
       phone: partner.phone,
@@ -314,13 +314,13 @@ export class AdminService {
   }
 
   async createPartner(data: CreatePartnerData) {
-    // Check if partner already exists
-    const existingPartner = await prisma.partner.findUnique({
+    // Check if email already exists in PartnerUser
+    const existingUser = await prisma.partnerUser.findUnique({
       where: { email: data.email }
     });
 
-    if (existingPartner) {
-      throw new Error('Partner with this email already exists');
+    if (existingUser) {
+      throw new Error('A user with this email already exists');
     }
 
     // Get tier
@@ -335,32 +335,60 @@ export class AdminService {
       }
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-
-    const partner = await prisma.partner.create({
-      data: {
-        email: data.email,
-        password: hashedPassword,
-        companyName: data.companyName,
-        contactName: data.contactName,
-        phone: data.phone,
-        website: data.website,
-        tierId: tier.id
-      },
-      include: { tier: true }
+    // Get or create default admin role for partners
+    let adminRole = await prisma.role.findUnique({
+      where: { name: 'admin' }
     });
 
-    logger.info(`[AdminService] Partner created by admin: ${partner.email}`);
+    if (!adminRole) {
+      adminRole = await prisma.role.create({
+        data: {
+          name: 'admin',
+          permissions: JSON.stringify(['all'])
+        }
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    // Create partner and user in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const partner = await tx.partner.create({
+        data: {
+          companyName: data.companyName,
+          contactName: data.contactName,
+          phone: data.phone,
+          website: data.website,
+          tierId: tier!.id
+        },
+        include: { tier: true }
+      });
+
+      const partnerUser = await tx.partnerUser.create({
+        data: {
+          partnerId: partner.id,
+          roleId: adminRole!.id,
+          email: data.email,
+          name: data.contactName,
+          password: hashedPassword,
+          status: 'active'
+        }
+      });
+
+      return { partner, partnerUser };
+    });
+
+    logger.info(`[AdminService] Partner created by admin: ${result.partnerUser.email}`);
 
     return {
-      id: partner.id,
-      email: partner.email,
-      companyName: partner.companyName,
-      contactName: partner.contactName,
-      phone: partner.phone,
-      tier: partner.tier,
-      apiKey: partner.apiKey,
-      createdAt: partner.createdAt
+      id: result.partner.id,
+      email: result.partnerUser.email,
+      companyName: result.partner.companyName,
+      contactName: result.partner.contactName,
+      phone: result.partner.phone,
+      tier: result.partner.tier,
+      apiKey: result.partner.apiKey,
+      createdAt: result.partner.createdAt
     };
   }
 
@@ -369,7 +397,6 @@ export class AdminService {
 
     if (data.companyName !== undefined) updateData.companyName = data.companyName;
     if (data.contactName !== undefined) updateData.contactName = data.contactName;
-    if (data.email !== undefined) updateData.email = data.email;
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.website !== undefined) updateData.website = data.website;
     if (data.verificationsUsed !== undefined) updateData.verificationsUsed = parseInt(String(data.verificationsUsed));
@@ -386,17 +413,28 @@ export class AdminService {
       }
     }
 
+    // Update partner
     const partner = await prisma.partner.update({
       where: { id: partnerId },
       data: updateData,
-      include: { tier: true }
+      include: { tier: true, users: { take: 1, orderBy: { createdAt: 'asc' } } }
     });
 
-    logger.info(`[AdminService] Partner updated by admin: ${partner.email}`);
+    // Handle email update on PartnerUser if provided
+    let userEmail = partner.users[0]?.email || '';
+    if (data.email !== undefined && partner.users[0]) {
+      await prisma.partnerUser.update({
+        where: { id: partner.users[0].id },
+        data: { email: data.email }
+      });
+      userEmail = data.email;
+    }
+
+    logger.info(`[AdminService] Partner updated by admin: ${userEmail}`);
 
     return {
       id: partner.id,
-      email: partner.email,
+      email: userEmail,
       companyName: partner.companyName,
       contactName: partner.contactName,
       phone: partner.phone,
@@ -422,10 +460,10 @@ export class AdminService {
     const updated = await prisma.partner.update({
       where: { id: partnerId },
       data: { isActive: !partner.isActive },
-      include: { tier: true }
+      include: { tier: true, users: { take: 1, orderBy: { createdAt: 'asc' } } }
     });
 
-    logger.info(`[AdminService] Partner ${updated.isActive ? 'activated' : 'deactivated'}: ${updated.email}`);
+    logger.info(`[AdminService] Partner ${updated.isActive ? 'activated' : 'deactivated'}: ${updated.users[0]?.email || partnerId}`);
 
     return {
       id: updated.id,
@@ -441,10 +479,11 @@ export class AdminService {
       data: {
         apiKey: uuidv4(),
         apiSecret: uuidv4()
-      }
+      },
+      include: { users: { take: 1, orderBy: { createdAt: 'asc' } } }
     });
 
-    logger.info(`[AdminService] API key reset for partner: ${partner.email}`);
+    logger.info(`[AdminService] API key reset for partner: ${partner.users[0]?.email || partnerId}`);
 
     return {
       id: partner.id,
@@ -502,7 +541,7 @@ export class AdminService {
             select: {
               id: true,
               companyName: true,
-              email: true
+              users: { take: 1, orderBy: { createdAt: 'asc' }, select: { email: true } }
             }
           },
           user: {
@@ -537,7 +576,11 @@ export class AdminService {
         riskLevel: v.results?.riskLevel,
         score: v.results?.score,
         passed: v.results?.passed,
-        partner: v.partner,
+        partner: v.partner ? {
+          id: v.partner.id,
+          companyName: v.partner.companyName,
+          email: v.partner.users[0]?.email || ''
+        } : null,
         createdAt: v.createdAt,
         completedAt: v.completedAt
       })),
@@ -549,7 +592,9 @@ export class AdminService {
     const verification = await prisma.verification.findUnique({
       where: { id: verificationId },
       include: {
-        partner: true,
+        partner: {
+          include: { users: { take: 1, orderBy: { createdAt: 'asc' } } }
+        },
         user: true,
         documents: true,
         results: true
@@ -619,7 +664,7 @@ export class AdminService {
       partner: verification.partner ? {
         id: verification.partner.id,
         companyName: verification.partner.companyName,
-        email: verification.partner.email
+        email: verification.partner.users[0]?.email || ''
       } : null,
       documents: documentsWithSignedUrls,
       createdAt: verification.createdAt,
