@@ -156,6 +156,40 @@ This is an automated message from ID Verify - Identity Verification Platform
     });
   }
 
+  async sendTeamInvitationEmail(
+    email: string,
+    name: string,
+    companyName: string,
+    inviteLink: string,
+    roleName: string
+  ): Promise<boolean> {
+    const subject = `You've been invited to join ${companyName} on ID Verify`;
+    const body = `
+Hello ${name},
+
+You've been invited to join ${companyName}'s team on ID Verify as a ${roleName}.
+
+Click the link below to accept the invitation and set up your account:
+
+${inviteLink}
+
+This invitation will expire in 7 days.
+
+If you have any questions, please contact your team administrator.
+
+Thank you!
+
+---
+This is an automated message from ID Verify - Identity Verification Platform
+    `.trim();
+
+    return this.sendEmail({
+      to: email,
+      subject,
+      body,
+    });
+  }
+
   async sendVerificationCompleteEmail(
     partnerEmail: string,
     partnerName: string,

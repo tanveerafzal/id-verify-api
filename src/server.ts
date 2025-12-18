@@ -6,6 +6,7 @@ import path from 'path';
 import authRoutes from './routes/auth.routes';
 import verificationRoutes from './routes/verification.routes';
 import partnerRoutes from './routes/partner.routes';
+import teamRoutes from './routes/team.routes';
 import adminRoutes from './routes/admin.routes';
 import { config } from './config';
 import { logger } from './utils/logger';
@@ -59,6 +60,7 @@ app.use('/api/v1', limiter);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/partners', partnerRoutes);
+app.use('/api/v1/partners/team', teamRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1', verificationRoutes);
 

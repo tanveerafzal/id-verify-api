@@ -20,37 +20,39 @@ model User {
 }
 
 model Partner {
-  id                String         @id @default(uuid())
+  id                String              @id @default(uuid())
   contactEmail      String?
   companyName       String
   contactName       String
   phone             String?
   tierId            String
-  apiKey            String         @unique @default(uuid())
-  apiSecret         String         @default(uuid())
-  verificationsUsed Int            @default(0)
-  isActive          Boolean        @default(true)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  apiKey            String              @unique @default(uuid())
+  apiSecret         String              @default(uuid())
+  verificationsUsed Int                 @default(0)
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
   address           String?
   logoUrl           String?
   website           String?
-  tier              Tier           @relation(fields: [tierId], references: [id])
-  verifications     Verification[] @relation("PartnerVerifications")
+  tier              Tier                @relation(fields: [tierId], references: [id])
+  verifications     Verification[]      @relation("PartnerVerifications")
   users             PartnerUser[]
+  invitations       PartnerInvitation[]
 
   @@index([apiKey])
   @@index([tierId])
 }
 
 model Role {
-  id          String        @id @default(uuid())
-  name        String        @unique
+  id          String              @id @default(uuid())
+  name        String              @unique
   description String?
-  permissions Json          @default("[]")
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  permissions Json                @default("[]")
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   users       PartnerUser[]
+  invitations PartnerInvitation[]
 }
 
 model PartnerUser {
@@ -74,6 +76,27 @@ model PartnerUser {
   @@index([email])
   @@index([partnerId])
   @@index([roleId])
+}
+
+model PartnerInvitation {
+  id        String   @id @default(uuid())
+  partnerId String
+  roleId    String
+  email     String
+  name      String
+  token     String   @unique
+  status    String   @default("pending")
+  expiresAt DateTime
+  invitedBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  partner   Partner  @relation(fields: [partnerId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  @@unique([partnerId, email])
+  @@index([email])
+  @@index([partnerId])
+  @@index([token])
 }
 
 model Tier {
