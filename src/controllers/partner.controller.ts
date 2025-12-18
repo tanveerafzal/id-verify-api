@@ -1,27 +1,13 @@
 import { Request, Response } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import { PartnerService } from '../services/partner.service';
+import { s3Service } from '../services/s3.service';
 import { logger } from '../utils/logger';
 
 const partnerService = new PartnerService();
 
-// Multer configuration for logo uploads
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/logos');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-    const ext = path.extname(file.originalname);
-    cb(null, `partner-logo-${uniqueSuffix}${ext}`);
-  }
-});
+// Multer configuration for logo uploads - use memory storage for S3 upload
+const storage = multer.memoryStorage();
 
 const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Accept images only
@@ -566,8 +552,25 @@ export class PartnerController {
         });
       }
 
-      // Generate logo URL
-      const logoUrl = `${process.env.API_URL || 'http://localhost:3002'}/uploads/logos/${req.file.filename}`;
+      let logoUrl: string;
+
+      // Upload to S3 if configured, otherwise return error (local storage not supported in production)
+      if (s3Service.isEnabled()) {
+        const result = await s3Service.uploadPartnerLogo(
+          req.partner.id,
+          req.file.buffer,
+          req.file.originalname,
+          req.file.mimetype
+        );
+        logoUrl = result.url;
+        logger.info(`[PartnerController] Logo uploaded to S3: ${logoUrl}`);
+      } else {
+        logger.error('[PartnerController] S3 not configured - cannot upload logo');
+        return res.status(500).json({
+          success: false,
+          error: 'File storage not configured. Please contact support.'
+        });
+      }
 
       // Update partner with new logo URL
       const updatedPartner = await partnerService.updatePartnerProfile(req.partner.id, {

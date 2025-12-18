@@ -186,6 +186,22 @@ export class S3Service {
   }
 
   /**
+   * Upload a partner logo to S3
+   */
+  async uploadPartnerLogo(
+    partnerId: string,
+    buffer: Buffer,
+    filename: string,
+    contentType: string = 'image/png'
+  ): Promise<UploadResult> {
+    const timestamp = Date.now();
+    const extension = filename.split('.').pop() || 'png';
+    const key = `partners/${partnerId}/logo-${timestamp}.${extension}`;
+
+    return this.uploadFile(buffer, key, contentType);
+  }
+
+  /**
    * Delete all files for a verification
    */
   async deleteVerificationFiles(verificationId: string): Promise<void> {
