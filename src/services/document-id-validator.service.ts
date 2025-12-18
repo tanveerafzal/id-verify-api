@@ -83,6 +83,9 @@ export class DocumentIdValidatorService {
       case 'RESIDENCE_PERMIT':
         validationResult = this.validateResidencePermitNumber(normalizedNumber, issuingCountry);
         break;
+      case 'PERMANENT_RESIDENT_CARD':
+        validationResult = this.validatePermanentResidentCardNumber(normalizedNumber, issuingCountry);
+        break;
       case 'VOTER_ID':
         validationResult = this.validateVoterIdNumber(normalizedNumber, issuingCountry);
         break;
@@ -469,6 +472,75 @@ export class DocumentIdValidatorService {
     // Fall back to generic validation
     if (!genericPattern.test(number)) {
       errors.push('Invalid residence permit number format. Must be 6-15 alphanumeric characters');
+    }
+
+    return { isValid: errors.length === 0, country, errors, warnings };
+  }
+
+  /**
+   * Validate permanent resident card number format
+   * Includes US Green Card (I-551), Canadian PR Card, and other countries
+   */
+  private validatePermanentResidentCardNumber(
+    number: string,
+    country?: string
+  ): { isValid: boolean; country?: string; errors: string[]; warnings: string[] } {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Permanent Resident Card patterns by country
+    const prCardPatterns: Record<string, ValidationPattern> = {
+      // US Green Card (I-551): 3 letters (receipt center code) + 10 digits
+      // Examples: SRC1234567890, EAC0987654321
+      US: {
+        pattern: /^[A-Z]{3}[0-9]{10}$/,
+        description: 'US Green Card: 3 letters followed by 10 digits (e.g., SRC1234567890)',
+        country: 'US'
+      },
+      // Canadian PR Card: Alphanumeric, typically 8-10 characters
+      // Format varies but commonly starts with letters
+      CA: {
+        pattern: /^[A-Z]{1,2}[0-9]{6,9}$/,
+        description: 'Canadian PR Card: 1-2 letters followed by 6-9 digits',
+        country: 'CA'
+      },
+      // Australian Permanent Resident (evidence number): Alphanumeric
+      AU: {
+        pattern: /^[A-Z0-9]{9,13}$/,
+        description: 'Australian PR evidence number: 9-13 alphanumeric characters',
+        country: 'AU'
+      },
+      // UK Indefinite Leave to Remain (ILR) - uses BRP number
+      GB: {
+        pattern: /^[A-Z0-9]{9}$/,
+        description: 'UK ILR/BRP: 9 alphanumeric characters',
+        country: 'GB'
+      }
+    };
+
+    // Generic PR card pattern
+    const genericPattern = /^[A-Z0-9]{6,15}$/;
+
+    // Try country-specific validation
+    if (country && prCardPatterns[country.toUpperCase()]) {
+      const pattern = prCardPatterns[country.toUpperCase()];
+      if (!pattern.pattern.test(number)) {
+        errors.push(`Invalid ${country} Permanent Resident Card format. Expected: ${pattern.description}`);
+      }
+      return { isValid: errors.length === 0, country: country.toUpperCase(), errors, warnings };
+    }
+
+    // Try to auto-detect country from format
+    for (const [countryCode, pattern] of Object.entries(prCardPatterns)) {
+      if (pattern.pattern.test(number)) {
+        warnings.push(`Detected as ${countryCode} Permanent Resident Card format`);
+        return { isValid: true, country: countryCode, errors, warnings };
+      }
+    }
+
+    // Fall back to generic validation
+    if (!genericPattern.test(number)) {
+      errors.push('Invalid Permanent Resident Card number format. Must be 6-15 alphanumeric characters');
     }
 
     return { isValid: errors.length === 0, country, errors, warnings };

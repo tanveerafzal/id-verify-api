@@ -74,7 +74,29 @@ const ENTITY_MAPPINGS: Record<string, keyof ExtractedDocumentData | 'skip'> = {
   'hair_color': 'skip',
   'photo': 'skip',
   'portrait': 'skip',
-  'signature': 'skip'
+  'signature': 'skip',
+
+  // Permanent Resident Card specific fields
+  'card_expires': 'expiryDate',
+  'cardexpires': 'expiryDate',
+  'card expires': 'expiryDate',
+  'card_expiration': 'expiryDate',
+  'resident_since': 'issueDate',
+  'residentsince': 'issueDate',
+  'resident since': 'issueDate',
+  'uscis_number': 'documentNumber',
+  'uscisnumber': 'documentNumber',
+  'uscis number': 'documentNumber',
+  'alien_number': 'documentNumber',
+  'aliennumber': 'documentNumber',
+  'alien number': 'documentNumber',
+  'a_number': 'documentNumber',
+  'anumber': 'documentNumber',
+  'a number': 'documentNumber',
+  'category': 'skip',
+  'country_of_birth': 'nationality',
+  'countryofbirth': 'nationality',
+  'country of birth': 'nationality'
 };
 
 export class OCRService {
@@ -262,6 +284,9 @@ export class OCRService {
       case DocumentType.NATIONAL_ID:
         extractedData = this.parseNationalId(text, confidence);
         break;
+      case DocumentType.PERMANENT_RESIDENT_CARD:
+        extractedData = this.parsePermanentResidentCard(text, confidence);
+        break;
       default:
         extractedData = this.parseGenericDocument(text, confidence);
     }
@@ -400,6 +425,7 @@ export class OCRService {
 
       case DocumentType.NATIONAL_ID:
       case DocumentType.RESIDENCE_PERMIT:
+      case DocumentType.PERMANENT_RESIDENT_CARD:
       case DocumentType.VOTER_ID:
         // Use generic processor for other ID types
         return docAiConfig.genericIdProcessorId || null;
@@ -714,6 +740,170 @@ export class OCRService {
     if (dobMatch) {
       data.dateOfBirth = this.normalizeDate(dobMatch[1]);
     }
+
+    return data;
+  }
+
+  /**
+   * Parse Permanent Resident Card (US Green Card, Canadian PR Card, etc.)
+   */
+  private parsePermanentResidentCard(text: string, confidence: number): ExtractedDocumentData {
+    const data: ExtractedDocumentData = { confidence };
+    const upperText = text.toUpperCase();
+
+    console.log('[OCRService] Parsing Permanent Resident Card text:', text.substring(0, 500));
+
+    // Extract names - PR cards typically have LAST NAME, FIRST NAME format
+    // US Green Card format: "SURNAME\nGIVEN NAME"
+    const lastNameMatch = text.match(/(?:SURNAME|LAST\s*NAME|FAMILY\s*NAME)[:\s]*([A-Z][A-Z\s\-']+)/i);
+    if (lastNameMatch) {
+      data.lastName = lastNameMatch[1].trim();
+    }
+
+    const firstNameMatch = text.match(/(?:GIVEN\s*NAME|FIRST\s*NAME|NOMBRE)[:\s]*([A-Z][A-Z\s\-']+)/i);
+    if (firstNameMatch) {
+      data.firstName = firstNameMatch[1].trim();
+    }
+
+    // Fallback: Look for name on a line by itself (common in cards)
+    if (!data.firstName && !data.lastName) {
+      const nameLineMatch = text.match(/^([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)$/m);
+      if (nameLineMatch) {
+        data.fullName = nameLineMatch[1].trim();
+      }
+    } else if (data.firstName && data.lastName) {
+      data.fullName = `${data.firstName} ${data.lastName}`;
+    }
+
+    // Document Number - US Green Card USCIS number (3 letters + 10 digits)
+    // Look for patterns like "SRC1234567890" or labeled fields
+    const uscisMatch = text.match(/(?:USCIS|Card|Number)[#:\s]*([A-Z]{3}\d{10})/i);
+    if (uscisMatch) {
+      data.documentNumber = uscisMatch[1].toUpperCase();
+    } else {
+      // Try to find the 13-character USCIS number pattern
+      const cardNumberMatch = text.match(/\b([A-Z]{3}\d{10})\b/);
+      if (cardNumberMatch) {
+        data.documentNumber = cardNumberMatch[1];
+      }
+    }
+
+    // Alien Registration Number (A-Number) - starts with A followed by 7-9 digits
+    if (!data.documentNumber) {
+      const aNumberMatch = text.match(/(?:A#|A-Number|Alien\s*(?:Registration\s*)?(?:Number|No))[:\s]*A?(\d{7,9})/i);
+      if (aNumberMatch) {
+        data.documentNumber = 'A' + aNumberMatch[1];
+      } else {
+        const aNumPattern = text.match(/\bA(\d{7,9})\b/);
+        if (aNumPattern) {
+          data.documentNumber = 'A' + aNumPattern[1];
+        }
+      }
+    }
+
+    // Canadian PR Card number
+    if (!data.documentNumber) {
+      const caPrMatch = text.match(/(?:Card|Document|PR)\s*(?:Number|No|#)[:\s]*([A-Z]{1,2}\d{6,9})/i);
+      if (caPrMatch) {
+        data.documentNumber = caPrMatch[1].toUpperCase();
+      }
+    }
+
+    // Date of Birth - multiple patterns
+    const dobPatterns = [
+      /(?:DATE\s*OF\s*BIRTH|DOB|BIRTH\s*DATE|BORN)[:\s]*(\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4})/i,
+      /(?:DATE\s*OF\s*BIRTH|DOB|BIRTH\s*DATE|BORN)[:\s]*([A-Z]{3}\s+\d{1,2},?\s+\d{4})/i, // "JAN 15, 1990"
+      /(?:DATE\s*OF\s*BIRTH|DOB)[:\s]*(\d{4}[-\/]\d{2}[-\/]\d{2})/i // YYYY-MM-DD
+    ];
+
+    for (const pattern of dobPatterns) {
+      const dobMatch = text.match(pattern);
+      if (dobMatch) {
+        data.dateOfBirth = this.normalizeDate(dobMatch[1]);
+        break;
+      }
+    }
+
+    // Expiry Date - CRITICAL: Multiple patterns for PR cards
+    // US Green Card: "CARD EXPIRES" or just "EXPIRES"
+    // Canadian PR Card: "EXP" or "EXPIRY"
+    const expiryPatterns = [
+      /(?:CARD\s*EXPIRES?|EXPIRES?|EXPIRY|EXPIRATION|EXP\.?\s*DATE|VALID\s*(?:UNTIL|THRU|THROUGH))[:\s]*(\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4})/i,
+      /(?:CARD\s*EXPIRES?|EXPIRES?|EXPIRY|EXP)[:\s]*([A-Z]{3}\s+\d{1,2},?\s+\d{4})/i, // "JAN 15, 2030"
+      /(?:CARD\s*EXPIRES?|EXPIRES?|EXP)[:\s]*(\d{4}[-\/]\d{2}[-\/]\d{2})/i, // YYYY-MM-DD
+      /(?:CARD\s*EXPIRES?|EXPIRES?)[:\s]*(\d{2}[-\/]\d{2}[-\/]\d{4})/i, // MM/DD/YYYY
+      /(?:CARD\s*EXPIRES?)[:\s]*(\d{2}\s*\d{2}\s*\d{4})/i // MMDDYYYY (no separators)
+    ];
+
+    for (const pattern of expiryPatterns) {
+      const expiryMatch = text.match(pattern);
+      if (expiryMatch) {
+        console.log('[OCRService] Found expiry date match:', expiryMatch[1]);
+        data.expiryDate = this.normalizeDate(expiryMatch[1]);
+        break;
+      }
+    }
+
+    // If still no expiry, look for any date that appears after "EXPIRES" keyword
+    if (!data.expiryDate) {
+      const expiresIndex = upperText.indexOf('EXPIRES');
+      const cardExpiresIndex = upperText.indexOf('CARD EXPIRES');
+
+      const searchStartIndex = cardExpiresIndex !== -1 ? cardExpiresIndex : expiresIndex;
+
+      if (searchStartIndex !== -1) {
+        const textAfterExpires = text.substring(searchStartIndex);
+        const dateMatch = textAfterExpires.match(/(\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4})/);
+        if (dateMatch) {
+          console.log('[OCRService] Found expiry date after EXPIRES keyword:', dateMatch[1]);
+          data.expiryDate = this.normalizeDate(dateMatch[1]);
+        }
+      }
+    }
+
+    // Resident Since / Issue Date
+    const residentSincePatterns = [
+      /(?:RESIDENT\s*SINCE|SINCE|ISSUED?)[:\s]*(\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4})/i,
+      /(?:RESIDENT\s*SINCE|SINCE)[:\s]*([A-Z]{3}\s+\d{1,2},?\s+\d{4})/i
+    ];
+
+    for (const pattern of residentSincePatterns) {
+      const issueMatch = text.match(pattern);
+      if (issueMatch) {
+        data.issueDate = this.normalizeDate(issueMatch[1]);
+        break;
+      }
+    }
+
+    // Country of Birth (common on PR cards)
+    const countryMatch = text.match(/(?:COUNTRY\s*OF\s*BIRTH|COB|BIRTH\s*COUNTRY)[:\s]*([A-Z]{2,30})/i);
+    if (countryMatch) {
+      data.nationality = countryMatch[1].trim();
+    }
+
+    // Gender
+    const genderMatch = text.match(/(?:SEX|GENDER)[:\s]*(M|F|MALE|FEMALE)/i);
+    if (genderMatch) {
+      data.gender = genderMatch[1].charAt(0).toUpperCase();
+    }
+
+    // Category (for reporting purposes)
+    const categoryMatch = text.match(/(?:CATEGORY|CAT)[:\s]*([A-Z0-9]{1,5})/i);
+    if (categoryMatch) {
+      // Store in a way that can be logged but won't interfere with main data
+      console.log('[OCRService] PR Card category:', categoryMatch[1]);
+    }
+
+    // Issuing Country - default based on detected patterns
+    if (data.documentNumber) {
+      if (/^[A-Z]{3}\d{10}$/.test(data.documentNumber)) {
+        data.issuingCountry = 'US';
+      } else if (/^[A-Z]{1,2}\d{6,9}$/.test(data.documentNumber)) {
+        data.issuingCountry = 'CA';
+      }
+    }
+
+    console.log('[OCRService] Parsed PR Card data:', data);
 
     return data;
   }

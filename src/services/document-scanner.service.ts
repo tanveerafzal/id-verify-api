@@ -83,22 +83,41 @@ const DOCUMENT_PATTERNS: Record<string, { keywords: string[]; patterns: RegExp[]
   },
   [DocumentType.RESIDENCE_PERMIT]: {
     keywords: [
-      'residence', 'permit', 'resident', 'permanent', 'temporary',
-      'visa', 'immigration', 'alien', 'green card', 'work permit',
+      'residence', 'permit', 'temporary', 'visa', 'work permit',
       'settlement', 'leave to remain', 'aufenthaltstitel', 'titre de séjour',
-      'permesso di soggiorno', 'residencia'
+      'permesso di soggiorno', 'residencia', 'temporary resident'
     ],
     patterns: [
       /residen(ce|t)\s*permit/i,
-      /permanent\s*resident/i,
-      /green\s*card/i,
+      /temporary\s*resident/i,
       /work\s*permit/i,
       /visa/i,
-      /immigration/i,
       /titre\s*de\s*s[ée]jour/i,
-      /aufenthaltstitel/i
+      /aufenthaltstitel/i,
+      /leave\s*to\s*remain/i
     ],
     weight: 0.8
+  },
+  [DocumentType.PERMANENT_RESIDENT_CARD]: {
+    keywords: [
+      'permanent resident', 'green card', 'pr card', 'lawful permanent',
+      'resident alien', 'immigration', 'uscis', 'permanent residence',
+      'carte de résident permanent', 'tarjeta de residente permanente',
+      'i-551', 'united states permanent', 'canada permanent resident',
+      'resident card', 'permanent residency'
+    ],
+    patterns: [
+      /permanent\s*resident/i,
+      /green\s*card/i,
+      /pr\s*card/i,
+      /lawful\s*permanent/i,
+      /resident\s*alien/i,
+      /\bUSCIS\b/i,
+      /\bI-551\b/i,
+      /permanent\s*residen(ce|cy)/i,
+      /carte\s*de\s*r[ée]sident\s*permanent/i
+    ],
+    weight: 1.0  // High weight - PR cards are important identity documents
   },
   [DocumentType.VOTER_ID]: {
     keywords: [
@@ -129,6 +148,11 @@ const VISION_LABEL_MAPPINGS: Record<string, DocumentType[]> = {
   'national id': [DocumentType.NATIONAL_ID],
   'residence permit': [DocumentType.RESIDENCE_PERMIT],
   'visa': [DocumentType.RESIDENCE_PERMIT],
+  'permanent resident': [DocumentType.PERMANENT_RESIDENT_CARD],
+  'permanent resident card': [DocumentType.PERMANENT_RESIDENT_CARD],
+  'green card': [DocumentType.PERMANENT_RESIDENT_CARD],
+  'pr card': [DocumentType.PERMANENT_RESIDENT_CARD],
+  'resident card': [DocumentType.PERMANENT_RESIDENT_CARD],
   'voter id': [DocumentType.VOTER_ID],
   'document': [DocumentType.OTHER],
   'text': [DocumentType.OTHER],
@@ -827,6 +851,7 @@ export class DocumentScannerService {
       [DocumentType.PASSPORT]: 'Passport',
       [DocumentType.NATIONAL_ID]: 'National ID Card',
       [DocumentType.RESIDENCE_PERMIT]: 'Residence Permit',
+      [DocumentType.PERMANENT_RESIDENT_CARD]: 'Permanent Resident Card',
       [DocumentType.VOTER_ID]: 'Voter ID',
       [DocumentType.SELFIE]: 'Selfie',
       [DocumentType.OTHER]: 'Other Document'

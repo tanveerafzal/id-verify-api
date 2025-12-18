@@ -92,7 +92,7 @@ export class VerificationService {
 
       // On retry, delete ALL old ID documents (not just matching types)
       // This ensures we start fresh with the new document and don't mix old/new data
-      const validIdTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'VOTER_ID'];
+      const validIdTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'PERMANENT_RESIDENT_CARD', 'VOTER_ID'];
       const oldIdDocs = verification.documents.filter(doc => validIdTypes.includes(doc.type));
 
       if (oldIdDocs.length > 0) {
@@ -478,7 +478,7 @@ export class VerificationService {
     const warnings: string[] = [];
 
     // CRITICAL: Validate required documents based on verification type
-    const validIdTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'VOTER_ID'];
+    const validIdTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'PERMANENT_RESIDENT_CARD', 'VOTER_ID'];
     const idDocuments = verification.documents.filter(doc => validIdTypes.includes(doc.type));
     const selfieDocuments = verification.documents.filter(doc => doc.type === 'SELFIE');
 
@@ -563,6 +563,7 @@ export class VerificationService {
       doc.type === 'PASSPORT' ||
       doc.type === 'NATIONAL_ID' ||
       doc.type === 'RESIDENCE_PERMIT' ||
+      doc.type === 'PERMANENT_RESIDENT_CARD' ||
       doc.type === 'VOTER_ID'
     );
     const selfieDocument = verification.documents.find(doc => doc.type === 'SELFIE');
@@ -815,7 +816,7 @@ export class VerificationService {
     });
 
     // Filter to only include ID documents (exclude selfies from data extraction)
-    const idDocTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'VOTER_ID'];
+    const idDocTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'PERMANENT_RESIDENT_CARD', 'VOTER_ID'];
     const idDocs = sortedDocs.filter(doc => idDocTypes.includes(doc.type));
 
     console.log('[VerificationService] Processing', idDocs.length, 'ID documents (sorted by date, newest first)');
@@ -1203,6 +1204,7 @@ export class VerificationService {
       [DocumentType.PASSPORT]: 'Passport',
       [DocumentType.NATIONAL_ID]: 'National ID Card',
       [DocumentType.RESIDENCE_PERMIT]: 'Residence Permit',
+      [DocumentType.PERMANENT_RESIDENT_CARD]: 'Permanent Resident Card',
       [DocumentType.VOTER_ID]: 'Voter ID',
       [DocumentType.SELFIE]: 'Selfie',
       [DocumentType.OTHER]: 'Other Document'
