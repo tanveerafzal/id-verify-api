@@ -74,11 +74,14 @@ export class TeamService {
       roleId: string;
     }
   ) {
+    // Normalize email to lowercase for case-insensitive handling
+    const normalizedEmail = data.email.toLowerCase().trim();
+
     // Check if user already exists
     const existingUser = await prisma.partnerUser.findFirst({
       where: {
         partnerId,
-        email: data.email,
+        email: normalizedEmail,
       },
     });
 
@@ -90,7 +93,7 @@ export class TeamService {
     const existingInvite = await prisma.partnerInvitation.findFirst({
       where: {
         partnerId,
-        email: data.email,
+        email: normalizedEmail,
         status: 'pending',
         expiresAt: { gt: new Date() },
       },
@@ -123,7 +126,7 @@ export class TeamService {
       data: {
         partnerId,
         roleId: data.roleId,
-        email: data.email,
+        email: normalizedEmail,
         name: data.name,
         token,
         expiresAt,
@@ -243,12 +246,15 @@ export class TeamService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Ensure email is lowercase for consistency
+    const normalizedEmail = invitation.email.toLowerCase().trim();
+
     // Create the partner user
     const partnerUser = await prisma.partnerUser.create({
       data: {
         partnerId: invitation.partnerId,
         roleId: invitation.roleId,
-        email: invitation.email,
+        email: normalizedEmail,
         name: invitation.name,
         password: hashedPassword,
         status: 'active',

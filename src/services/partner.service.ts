@@ -20,9 +20,12 @@ interface RegisterPartnerData {
 
 export class PartnerService {
   async registerPartner(data: RegisterPartnerData) {
+    // Normalize email to lowercase for case-insensitive storage
+    const normalizedEmail = data.email.toLowerCase().trim();
+
     // Check if user with this email already exists
     const existingUser = await prisma.partnerUser.findUnique({
-      where: { email: data.email }
+      where: { email: normalizedEmail }
     });
 
     if (existingUser) {
@@ -74,7 +77,7 @@ export class PartnerService {
       data: {
         partnerId: partner.id,
         roleId: adminRole.id,
-        email: data.email,
+        email: normalizedEmail,
         name: data.contactName,
         password: hashedPassword
       }
@@ -104,9 +107,12 @@ export class PartnerService {
   }
 
   async loginPartner(email: string, password: string) {
+    // Normalize email to lowercase for case-insensitive lookup
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Find user by email
     const partnerUser = await prisma.partnerUser.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       include: {
         partner: {
           include: {
@@ -177,13 +183,26 @@ export class PartnerService {
 
     const primaryUser = partner.users[0];
 
+    // Generate signed URL for logo if stored in S3
+    let signedLogoUrl = partner.logoUrl;
+    if (partner.logoUrl && s3Service.isEnabled()) {
+      try {
+        const key = s3Service.extractKeyFromUrl(partner.logoUrl);
+        if (key) {
+          signedLogoUrl = await s3Service.getSignedUrl(key);
+        }
+      } catch (error) {
+        logger.error(`[PartnerService] Failed to generate signed URL for profile logo:`, error);
+      }
+    }
+
     return {
       id: partner.id,
       email: primaryUser?.email || '',
       companyName: partner.companyName,
       contactName: partner.contactName,
       phone: partner.phone,
-      logoUrl: partner.logoUrl,
+      logoUrl: signedLogoUrl,
       website: partner.website,
       address: partner.address,
       tier: partner.tier,
@@ -225,13 +244,26 @@ export class PartnerService {
 
     const primaryUser = updatedPartner.users[0];
 
+    // Generate signed URL for logo if stored in S3
+    let signedLogoUrl = updatedPartner.logoUrl;
+    if (updatedPartner.logoUrl && s3Service.isEnabled()) {
+      try {
+        const key = s3Service.extractKeyFromUrl(updatedPartner.logoUrl);
+        if (key) {
+          signedLogoUrl = await s3Service.getSignedUrl(key);
+        }
+      } catch (error) {
+        logger.error(`[PartnerService] Failed to generate signed URL for updated logo:`, error);
+      }
+    }
+
     return {
       id: updatedPartner.id,
       email: primaryUser?.email || '',
       companyName: updatedPartner.companyName,
       contactName: updatedPartner.contactName,
       phone: updatedPartner.phone,
-      logoUrl: updatedPartner.logoUrl,
+      logoUrl: signedLogoUrl,
       website: updatedPartner.website,
       address: updatedPartner.address,
       tier: updatedPartner.tier,
@@ -735,11 +767,14 @@ export class PartnerService {
   }
 
   async forgotPassword(email: string) {
+    // Normalize email to lowercase for case-insensitive lookup
+    const normalizedEmail = email.toLowerCase().trim();
+
     try {
-      logger.info(`[PartnerService] Forgot password request for: ${email}`);
+      logger.info(`[PartnerService] Forgot password request for: ${normalizedEmail}`);
 
       const partnerUser = await prisma.partnerUser.findUnique({
-        where: { email },
+        where: { email: normalizedEmail },
         include: { partner: true }
       });
 
@@ -854,7 +889,27 @@ export class PartnerService {
       }
     });
 
-    return partner;
+    if (!partner) {
+      return null;
+    }
+
+    // Generate signed URL for logo if stored in S3
+    let signedLogoUrl = partner.logoUrl;
+    if (partner.logoUrl && s3Service.isEnabled()) {
+      try {
+        const key = s3Service.extractKeyFromUrl(partner.logoUrl);
+        if (key) {
+          signedLogoUrl = await s3Service.getSignedUrl(key);
+        }
+      } catch (error) {
+        logger.error(`[PartnerService] Failed to generate signed URL for logo:`, error);
+      }
+    }
+
+    return {
+      companyName: partner.companyName,
+      logoUrl: signedLogoUrl
+    };
   }
 
   // Update verification user details (partner can only update their own verifications)
