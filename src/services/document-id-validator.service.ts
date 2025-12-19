@@ -86,9 +86,6 @@ export class DocumentIdValidatorService {
       case 'PERMANENT_RESIDENT_CARD':
         validationResult = this.validatePermanentResidentCardNumber(normalizedNumber, issuingCountry);
         break;
-      case 'VOTER_ID':
-        validationResult = this.validateVoterIdNumber(normalizedNumber, issuingCountry);
-        break;
       default:
         validationResult = this.validateGenericDocumentNumber(normalizedNumber);
     }
@@ -541,52 +538,6 @@ export class DocumentIdValidatorService {
     // Fall back to generic validation
     if (!genericPattern.test(number)) {
       errors.push('Invalid Permanent Resident Card number format. Must be 6-15 alphanumeric characters');
-    }
-
-    return { isValid: errors.length === 0, country, errors, warnings };
-  }
-
-  /**
-   * Validate voter ID number format
-   */
-  private validateVoterIdNumber(
-    number: string,
-    country?: string
-  ): { isValid: boolean; country?: string; errors: string[]; warnings: string[] } {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    // Voter ID patterns
-    const voterIdPatterns: Record<string, ValidationPattern> = {
-      // Indian Voter ID (EPIC): 3 letters + 7 digits
-      IN: {
-        pattern: /^[A-Z]{3}[0-9]{7}$/,
-        description: 'Indian Voter ID: 3 letters followed by 7 digits',
-        country: 'IN'
-      },
-      // Mexican INE: 13 digits
-      MX: {
-        pattern: /^[0-9]{13}$/,
-        description: 'Mexican INE: 13 digits',
-        country: 'MX'
-      }
-    };
-
-    // Generic voter ID pattern
-    const genericPattern = /^[A-Z0-9]{6,15}$/;
-
-    // Try country-specific validation
-    if (country && voterIdPatterns[country.toUpperCase()]) {
-      const pattern = voterIdPatterns[country.toUpperCase()];
-      if (!pattern.pattern.test(number)) {
-        errors.push(`Invalid ${country} voter ID format. Expected: ${pattern.description}`);
-      }
-      return { isValid: errors.length === 0, country: country.toUpperCase(), errors, warnings };
-    }
-
-    // Fall back to generic validation
-    if (!genericPattern.test(number)) {
-      errors.push('Invalid voter ID format. Must be 6-15 alphanumeric characters');
     }
 
     return { isValid: errors.length === 0, country, errors, warnings };

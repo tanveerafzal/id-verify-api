@@ -426,7 +426,6 @@ export class OCRService {
       case DocumentType.NATIONAL_ID:
       case DocumentType.RESIDENCE_PERMIT:
       case DocumentType.PERMANENT_RESIDENT_CARD:
-      case DocumentType.VOTER_ID:
         // Use generic processor for other ID types
         return docAiConfig.genericIdProcessorId || null;
 

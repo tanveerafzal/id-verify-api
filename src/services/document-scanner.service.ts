@@ -118,22 +118,6 @@ const DOCUMENT_PATTERNS: Record<string, { keywords: string[]; patterns: RegExp[]
       /carte\s*de\s*r[ée]sident\s*permanent/i
     ],
     weight: 1.0  // High weight - PR cards are important identity documents
-  },
-  [DocumentType.VOTER_ID]: {
-    keywords: [
-      'voter', 'election', 'electoral', 'voting', 'poll', 'ballot',
-      'voter id', 'election commission', 'electoral roll', 'elector',
-      'registered voter', 'constituency', 'polling'
-    ],
-    patterns: [
-      /voter\s*id/i,
-      /election/i,
-      /electoral/i,
-      /polling/i,
-      /elector/i,
-      /constituency/i
-    ],
-    weight: 0.7
   }
 };
 
@@ -153,7 +137,6 @@ const VISION_LABEL_MAPPINGS: Record<string, DocumentType[]> = {
   'green card': [DocumentType.PERMANENT_RESIDENT_CARD],
   'pr card': [DocumentType.PERMANENT_RESIDENT_CARD],
   'resident card': [DocumentType.PERMANENT_RESIDENT_CARD],
-  'voter id': [DocumentType.VOTER_ID],
   'document': [DocumentType.OTHER],
   'text': [DocumentType.OTHER],
   'card': [DocumentType.OTHER]
@@ -852,7 +835,6 @@ export class DocumentScannerService {
       [DocumentType.NATIONAL_ID]: 'National ID Card',
       [DocumentType.RESIDENCE_PERMIT]: 'Residence Permit',
       [DocumentType.PERMANENT_RESIDENT_CARD]: 'Permanent Resident Card',
-      [DocumentType.VOTER_ID]: 'Voter ID',
       [DocumentType.SELFIE]: 'Selfie',
       [DocumentType.OTHER]: 'Other Document'
     };
