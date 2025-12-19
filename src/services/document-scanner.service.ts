@@ -481,6 +481,13 @@ export class DocumentScannerService {
         processorId: config.googleCloud.documentAi.usDriversLicenseProcessorId,
         documentType: DocumentType.DRIVERS_LICENSE,
         name: 'US Driver License'
+      },
+      // Generic ID Processor for PR cards, residence permits, national IDs
+      {
+        processorId: config.googleCloud.documentAi.genericIdProcessorId,
+        documentType: DocumentType.PERMANENT_RESIDENT_CARD,
+        name: 'Generic ID (PR Card)',
+        matchesTypes: [DocumentType.PERMANENT_RESIDENT_CARD, DocumentType.RESIDENCE_PERMIT, DocumentType.NATIONAL_ID]
       }
     ].filter(p => p.processorId); // Only include configured processors
 
@@ -498,8 +505,11 @@ export class DocumentScannerService {
     let processorConfigs = [...allProcessors];
     if (userSelectedType) {
       processorConfigs.sort((a, b) => {
-        const aMatches = a.documentType === userSelectedType ? 1 : 0;
-        const bMatches = b.documentType === userSelectedType ? 1 : 0;
+        // Check if processor matches the user-selected type (including matchesTypes array)
+        const aMatches = a.documentType === userSelectedType ||
+          ((a as any).matchesTypes && (a as any).matchesTypes.includes(userSelectedType)) ? 1 : 0;
+        const bMatches = b.documentType === userSelectedType ||
+          ((b as any).matchesTypes && (b as any).matchesTypes.includes(userSelectedType)) ? 1 : 0;
         return bMatches - aMatches; // Matching processors first
       });
       console.log('[DocumentScannerService] Processor order prioritized for:', userSelectedType);
@@ -512,7 +522,7 @@ export class DocumentScannerService {
       entityCount: number;
       processorName: string;
       detectedFields: string[];
-      entities: DocumentAiEntity[]; // Cache the entities for later use
+      entities: DocumentAiEntity[]; // Cache the entities for later use  
     }> = [];
 
     // High confidence threshold - if user-selected type processor achieves this, use it immediately
@@ -561,8 +571,17 @@ export class DocumentScannerService {
 
           console.log(`[DocumentScannerService] ${processorConfig.name}: ${meaningfulEntities.length} entities, confidence: ${confidence.toFixed(2)}`);
 
+          // Determine the actual document type to return
+          // If this processor supports multiple types (via matchesTypes) and user selected one, use that
+          const matchesTypes = (processorConfig as any).matchesTypes as DocumentType[] | undefined;
+          const matchesUserSelection = userSelectedType && (
+            processorConfig.documentType === userSelectedType ||
+            (matchesTypes && matchesTypes.includes(userSelectedType))
+          );
+          const actualDocumentType = matchesUserSelection && userSelectedType ? userSelectedType : processorConfig.documentType;
+
           const result = {
-            documentType: processorConfig.documentType,
+            documentType: actualDocumentType,
             confidence,
             entityCount: meaningfulEntities.length,
             processorName: processorConfig.name,
@@ -572,9 +591,9 @@ export class DocumentScannerService {
 
           results.push(result);
 
-          // If this is the user-selected type and confidence is high, use it immediately
+          // If this matches the user-selected type and confidence is high, use it immediately
           // This prevents trying other processors unnecessarily
-          if (userSelectedType && processorConfig.documentType === userSelectedType && confidence >= HIGH_CONFIDENCE_THRESHOLD) {
+          if (matchesUserSelection && confidence >= HIGH_CONFIDENCE_THRESHOLD) {
             console.log(`[DocumentScannerService] High confidence match for user-selected type: ${processorConfig.name} (${confidence.toFixed(2)})`);
             return {
               documentType: result.documentType,
