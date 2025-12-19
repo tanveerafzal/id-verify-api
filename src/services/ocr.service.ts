@@ -91,6 +91,8 @@ const ENTITY_MAPPINGS: Record<string, keyof ExtractedDocumentData | 'skip'> = {
   'aliennumber': 'documentNumber',
   'alien number': 'documentNumber',
   'a_number': 'documentNumber',
+  'id_number': 'documentNumber',
+  'id_no': 'documentNumber',
   'anumber': 'documentNumber',
   'a number': 'documentNumber',
   'category': 'skip',
