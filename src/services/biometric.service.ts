@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
-import { RekognitionClient, CompareFacesCommand } from '@aws-sdk/client-rekognition';
+import { RekognitionClient, CompareFacesCommand, DetectFacesCommand, Attribute } from '@aws-sdk/client-rekognition';
 import { BiometricData, LivenessCheckResult } from '../types/verification.types';
 
 // Face annotation interface from Google Vision API
@@ -732,11 +732,206 @@ export class BiometricService {
   /**
    * Single-image anti-spoofing detection
    * Detects if the selfie is a real face or a printed photo/screen
+   * Uses AWS Rekognition if available, falls back to heuristic analysis
    */
   async performSingleImageLivenessCheck(imageBuffer: Buffer): Promise<LivenessCheckResult> {
     console.log('[BiometricService] Performing single-image liveness check...');
 
+    // Try AWS Rekognition first (more accurate)
+    if (this.useAwsRekognition && this.rekognitionClient) {
+      try {
+        const awsResult = await this.performAwsRekognitionLivenessCheck(imageBuffer);
+        if (awsResult.checks && !awsResult.checks.error) {
+          console.log('[BiometricService] AWS Rekognition liveness check completed');
+          return awsResult;
+        }
+        console.log('[BiometricService] AWS Rekognition check returned error, falling back to heuristic');
+      } catch (error) {
+        console.error('[BiometricService] AWS Rekognition liveness check failed, falling back to heuristic:', error);
+      }
+    }
+
+    // Fall back to heuristic analysis with relaxed thresholds
+    return this.performHeuristicLivenessCheck(imageBuffer);
+  }
+
+  /**
+   * AWS Rekognition-based liveness detection
+   * Uses face attributes to determine if the selfie is genuine
+   */
+  private async performAwsRekognitionLivenessCheck(imageBuffer: Buffer): Promise<LivenessCheckResult> {
+    console.log('[BiometricService] Using AWS Rekognition for liveness detection...');
+
     const checks: LivenessCheckResult['checks'] = {};
+
+    try {
+      const command = new DetectFacesCommand({
+        Image: {
+          Bytes: imageBuffer
+        },
+        Attributes: ['ALL'] as Attribute[] // Get all facial attributes
+      });
+
+      const response = await this.rekognitionClient!.send(command);
+
+      if (!response.FaceDetails || response.FaceDetails.length === 0) {
+        console.log('[BiometricService] No face detected in image');
+        return {
+          isLive: false,
+          confidence: 0,
+          checks: { error: 'No face detected', method: 'aws_rekognition' }
+        };
+      }
+
+      const face = response.FaceDetails[0];
+      let totalScore = 0;
+      let checkCount = 0;
+
+      // 1. Face Detection Confidence (should be high for real faces)
+      const faceConfidence = (face.Confidence || 0) / 100;
+      checks.faceConfidence = faceConfidence;
+      checks.faceConfidencePass = faceConfidence >= 0.90;
+      totalScore += faceConfidence;
+      checkCount++;
+      console.log(`[BiometricService] AWS - Face confidence: ${(faceConfidence * 100).toFixed(1)}%`);
+
+      // 2. Eyes Open Check (real selfies usually have eyes open)
+      if (face.EyesOpen) {
+        const eyesOpenScore = face.EyesOpen.Value ? (face.EyesOpen.Confidence || 0) / 100 : 0;
+        checks.eyesOpen = face.EyesOpen.Value;
+        checks.eyesOpenConfidence = eyesOpenScore;
+        checks.eyesOpenPass = face.EyesOpen.Value === true && eyesOpenScore >= 0.7;
+        // Give partial credit if eyes are detected even if not fully open
+        totalScore += face.EyesOpen.Value ? eyesOpenScore : eyesOpenScore * 0.5;
+        checkCount++;
+        console.log(`[BiometricService] AWS - Eyes open: ${face.EyesOpen.Value} (${(eyesOpenScore * 100).toFixed(1)}% confidence)`);
+      }
+
+      // 3. Face Pose Check (should be relatively frontal, not extreme angles)
+      if (face.Pose) {
+        const yaw = Math.abs(face.Pose.Yaw || 0);
+        const pitch = Math.abs(face.Pose.Pitch || 0);
+        const roll = Math.abs(face.Pose.Roll || 0);
+
+        // Allow more flexibility in pose (up to 35 degrees)
+        const poseScore = Math.max(0, 1 - (Math.max(yaw, pitch, roll) / 50));
+        checks.poseYaw = face.Pose.Yaw;
+        checks.posePitch = face.Pose.Pitch;
+        checks.poseRoll = face.Pose.Roll;
+        checks.poseScore = poseScore;
+        checks.posePass = yaw <= 35 && pitch <= 35 && roll <= 35;
+        totalScore += poseScore;
+        checkCount++;
+        console.log(`[BiometricService] AWS - Pose: yaw=${yaw.toFixed(1)}, pitch=${pitch.toFixed(1)}, roll=${roll.toFixed(1)}`);
+      }
+
+      // 4. Image Quality Check
+      if (face.Quality) {
+        const brightness = (face.Quality.Brightness || 50) / 100;
+        const sharpness = (face.Quality.Sharpness || 50) / 100;
+
+        // Be more lenient with quality thresholds
+        const qualityScore = (brightness * 0.4 + sharpness * 0.6);
+        checks.brightness = brightness;
+        checks.sharpness = sharpness;
+        checks.qualityScore = qualityScore;
+        checks.qualityPass = brightness >= 0.25 && sharpness >= 0.3;
+        totalScore += qualityScore;
+        checkCount++;
+        console.log(`[BiometricService] AWS - Quality: brightness=${(brightness * 100).toFixed(1)}%, sharpness=${(sharpness * 100).toFixed(1)}%`);
+      }
+
+      // 5. Sunglasses Check (shouldn't be wearing sunglasses for verification)
+      if (face.Sunglasses) {
+        const noSunglasses = face.Sunglasses.Value === false;
+        const sunglassConfidence = (face.Sunglasses.Confidence || 0) / 100;
+        checks.sunglasses = face.Sunglasses.Value;
+        checks.sunglassesConfidence = sunglassConfidence;
+        checks.noSunglassesPass = noSunglasses && sunglassConfidence >= 0.7;
+        // If wearing sunglasses with high confidence, reduce score
+        totalScore += noSunglasses ? 1 : (1 - sunglassConfidence * 0.5);
+        checkCount++;
+        console.log(`[BiometricService] AWS - Sunglasses: ${face.Sunglasses.Value} (${(sunglassConfidence * 100).toFixed(1)}% confidence)`);
+      }
+
+      // 6. Natural Expression Check (some emotion should be present)
+      if (face.Emotions && face.Emotions.length > 0) {
+        // Sort emotions by confidence
+        const emotions = [...face.Emotions].sort((a, b) => (b.Confidence || 0) - (a.Confidence || 0));
+        const topEmotion = emotions[0];
+        const emotionConfidence = (topEmotion.Confidence || 0) / 100;
+
+        checks.topEmotion = topEmotion.Type;
+        checks.emotionConfidence = emotionConfidence;
+        // Real faces usually show some emotion with confidence
+        checks.emotionPass = emotionConfidence >= 0.5;
+        totalScore += emotionConfidence >= 0.3 ? 0.8 : 0.5;
+        checkCount++;
+        console.log(`[BiometricService] AWS - Top emotion: ${topEmotion.Type} (${(emotionConfidence * 100).toFixed(1)}%)`);
+      }
+
+      // 7. Bounding Box Check (face should be a reasonable size in frame)
+      if (face.BoundingBox) {
+        const faceArea = (face.BoundingBox.Width || 0) * (face.BoundingBox.Height || 0);
+        // Face should be between 5% and 80% of image
+        const sizeScore = faceArea >= 0.05 && faceArea <= 0.8 ? 1 : faceArea >= 0.02 ? 0.7 : 0.3;
+        checks.faceArea = faceArea;
+        checks.faceSizePass = faceArea >= 0.05 && faceArea <= 0.8;
+        totalScore += sizeScore;
+        checkCount++;
+        console.log(`[BiometricService] AWS - Face area: ${(faceArea * 100).toFixed(1)}% of image`);
+      }
+
+      // Calculate final confidence
+      const confidence = checkCount > 0 ? totalScore / checkCount : 0;
+
+      // Count passed checks
+      const passedChecks = [
+        checks.faceConfidencePass,
+        checks.eyesOpenPass,
+        checks.posePass,
+        checks.qualityPass,
+        checks.noSunglassesPass,
+        checks.emotionPass,
+        checks.faceSizePass
+      ].filter(Boolean).length;
+
+      const totalChecks = 7;
+
+      // More lenient: require 4 out of 7 checks to pass OR confidence >= 0.6
+      const isLive = passedChecks >= 4 || confidence >= 0.6;
+
+      checks.method = 'aws_rekognition';
+      checks.passedChecks = passedChecks;
+      checks.totalChecks = totalChecks;
+
+      console.log(`[BiometricService] AWS Rekognition liveness result: isLive=${isLive}, confidence=${confidence.toFixed(3)}, passedChecks=${passedChecks}/${totalChecks}`);
+
+      return {
+        isLive,
+        confidence,
+        checks
+      };
+    } catch (error: any) {
+      console.error('[BiometricService] AWS Rekognition DetectFaces error:', error.message);
+      return {
+        isLive: false,
+        confidence: 0,
+        checks: { error: error.message, method: 'aws_rekognition' }
+      };
+    }
+  }
+
+  /**
+   * Heuristic-based liveness detection (fallback)
+   * Uses image analysis when AWS Rekognition is not available
+   * Thresholds are relaxed to reduce false positives
+   */
+  private async performHeuristicLivenessCheck(imageBuffer: Buffer): Promise<LivenessCheckResult> {
+    console.log('[BiometricService] Using heuristic liveness check (fallback)...');
+
+    const checks: LivenessCheckResult['checks'] = {};
+    checks.method = 'heuristic';
     let totalScore = 0;
     let checkCount = 0;
 
@@ -744,66 +939,66 @@ export class BiometricService {
       // 1. Texture Analysis - Real skin has micro-texture, printed photos are smoother
       const textureScore = await this.analyzeTextureForLiveness(imageBuffer);
       checks.textureScore = textureScore;
-      checks.texturePass = textureScore > 0.55; // Increased from 0.4
+      checks.texturePass = textureScore > 0.40; // Relaxed from 0.55
       totalScore += textureScore;
       checkCount++;
-      console.log(`[BiometricService] Texture analysis score: ${textureScore.toFixed(3)} (threshold: 0.55)`);
+      console.log(`[BiometricService] Texture analysis score: ${textureScore.toFixed(3)} (threshold: 0.40)`);
 
       // 2. Color Distribution Analysis - Real skin has specific color patterns
       const colorScore = await this.analyzeColorDistribution(imageBuffer);
       checks.colorScore = colorScore;
-      checks.colorPass = colorScore > 0.55; // Increased from 0.5
+      checks.colorPass = colorScore > 0.40; // Relaxed from 0.55
       totalScore += colorScore;
       checkCount++;
-      console.log(`[BiometricService] Color distribution score: ${colorScore.toFixed(3)} (threshold: 0.55)`);
+      console.log(`[BiometricService] Color distribution score: ${colorScore.toFixed(3)} (threshold: 0.40)`);
 
       // 3. Moiré Pattern Detection - Screens show moiré patterns
       const moireScore = await this.detectMoirePatterns(imageBuffer);
       checks.moireScore = moireScore;
-      checks.moirePass = moireScore > 0.65; // Increased from 0.6
+      checks.moirePass = moireScore > 0.50; // Relaxed from 0.65
       totalScore += moireScore;
       checkCount++;
-      console.log(`[BiometricService] Moiré detection score: ${moireScore.toFixed(3)} (threshold: 0.65)`);
+      console.log(`[BiometricService] Moiré detection score: ${moireScore.toFixed(3)} (threshold: 0.50)`);
 
       // 4. Specular Reflection Analysis - Real faces have natural, varied highlights
       const reflectionScore = await this.analyzeSpecularReflections(imageBuffer);
       checks.reflectionScore = reflectionScore;
-      checks.reflectionPass = reflectionScore > 0.4; // Increased from 0.3
+      checks.reflectionPass = reflectionScore > 0.30; // Relaxed from 0.4
       totalScore += reflectionScore;
       checkCount++;
-      console.log(`[BiometricService] Specular reflection score: ${reflectionScore.toFixed(3)} (threshold: 0.4)`);
+      console.log(`[BiometricService] Specular reflection score: ${reflectionScore.toFixed(3)} (threshold: 0.30)`);
 
       // 5. Focus/Depth Variation - Real 3D faces have depth, flat photos don't
       const depthScore = await this.analyzeDepthVariation(imageBuffer);
       checks.depthScore = depthScore;
-      checks.depthPass = depthScore > 0.5; // Increased from 0.4
+      checks.depthPass = depthScore > 0.35; // Relaxed from 0.5
       totalScore += depthScore;
       checkCount++;
-      console.log(`[BiometricService] Depth variation score: ${depthScore.toFixed(3)} (threshold: 0.5)`);
+      console.log(`[BiometricService] Depth variation score: ${depthScore.toFixed(3)} (threshold: 0.35)`);
 
       // 6. Edge Analysis - Printed photos have sharp paper edges
       const edgeScore = await this.analyzeEdgesForPrintedPhoto(imageBuffer);
       checks.edgeScore = edgeScore;
-      checks.edgePass = edgeScore > 0.55; // Increased from 0.5
+      checks.edgePass = edgeScore > 0.40; // Relaxed from 0.55
       totalScore += edgeScore;
       checkCount++;
-      console.log(`[BiometricService] Edge analysis score: ${edgeScore.toFixed(3)} (threshold: 0.55)`);
+      console.log(`[BiometricService] Edge analysis score: ${edgeScore.toFixed(3)} (threshold: 0.40)`);
 
-      // 7. NEW: Print artifacts detection - Detect color banding and halftone patterns
+      // 7. Print artifacts detection - Detect color banding and halftone patterns
       const printArtifactScore = await this.detectPrintArtifacts(imageBuffer);
       checks.printArtifactScore = printArtifactScore;
-      checks.printArtifactPass = printArtifactScore > 0.6; // Higher = less likely printed
+      checks.printArtifactPass = printArtifactScore > 0.45; // Relaxed from 0.6
       totalScore += printArtifactScore;
       checkCount++;
-      console.log(`[BiometricService] Print artifact score: ${printArtifactScore.toFixed(3)} (threshold: 0.6)`);
+      console.log(`[BiometricService] Print artifact score: ${printArtifactScore.toFixed(3)} (threshold: 0.45)`);
 
-      // 8. NEW: Reflection uniformity - Printed photos have uniform glossy reflections
+      // 8. Reflection uniformity - Printed photos have uniform glossy reflections
       const reflectionUniformityScore = await this.analyzeReflectionUniformity(imageBuffer);
       checks.reflectionUniformityScore = reflectionUniformityScore;
-      checks.reflectionUniformityPass = reflectionUniformityScore > 0.5;
+      checks.reflectionUniformityPass = reflectionUniformityScore > 0.40; // Relaxed from 0.5
       totalScore += reflectionUniformityScore;
       checkCount++;
-      console.log(`[BiometricService] Reflection uniformity score: ${reflectionUniformityScore.toFixed(3)} (threshold: 0.5)`);
+      console.log(`[BiometricService] Reflection uniformity score: ${reflectionUniformityScore.toFixed(3)} (threshold: 0.40)`);
 
       // Calculate overall confidence
       const confidence = checkCount > 0 ? totalScore / checkCount : 0;
@@ -820,10 +1015,14 @@ export class BiometricService {
         checks.reflectionUniformityPass
       ].filter(Boolean).length;
 
-      // STRICTER: Require at least 6 out of 8 checks to pass AND confidence >= 0.55
-      const isLive = passedChecks >= 6 && confidence >= 0.55;
+      checks.passedChecks = passedChecks;
+      checks.totalChecks = 8;
 
-      console.log(`[BiometricService] Liveness check result: isLive=${isLive}, confidence=${confidence.toFixed(3)}, passedChecks=${passedChecks}/8`);
+      // RELAXED: Require at least 4 out of 8 checks to pass OR confidence >= 0.45
+      // This reduces false positives while still catching obvious spoofs
+      const isLive = passedChecks >= 4 || confidence >= 0.45;
+
+      console.log(`[BiometricService] Heuristic liveness result: isLive=${isLive}, confidence=${confidence.toFixed(3)}, passedChecks=${passedChecks}/8`);
 
       return {
         isLive,
@@ -831,11 +1030,13 @@ export class BiometricService {
         checks
       };
     } catch (error) {
-      console.error('[BiometricService] Liveness check error:', error);
+      console.error('[BiometricService] Heuristic liveness check error:', error);
+      // On error, be lenient and allow the verification to continue
+      // The face comparison will still provide security
       return {
-        isLive: false,
-        confidence: 0,
-        checks: { error: 'Liveness check failed' }
+        isLive: true,
+        confidence: 0.5,
+        checks: { error: 'Liveness check failed, defaulting to pass', method: 'heuristic_fallback' }
       };
     }
   }

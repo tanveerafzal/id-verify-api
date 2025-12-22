@@ -85,11 +85,17 @@ export interface LivenessCheckResult {
   isLive: boolean;
   confidence: number;
   checks: {
+    // Method used for liveness check
+    method?: string;
+    passedChecks?: number;
+    totalChecks?: number;
+
     // Video-based checks
     blinkDetected?: boolean;
     headMovement?: boolean;
     textureAnalysis?: boolean;
-    // Single-image anti-spoofing checks
+
+    // Single-image anti-spoofing checks (heuristic)
     textureScore?: number;
     texturePass?: boolean;
     colorScore?: number;
@@ -108,6 +114,31 @@ export interface LivenessCheckResult {
     // Reflection uniformity (glossy paper detection)
     reflectionUniformityScore?: number;
     reflectionUniformityPass?: boolean;
+
+    // AWS Rekognition-based checks
+    faceConfidence?: number;
+    faceConfidencePass?: boolean;
+    eyesOpen?: boolean;
+    eyesOpenConfidence?: number;
+    eyesOpenPass?: boolean;
+    poseYaw?: number;
+    posePitch?: number;
+    poseRoll?: number;
+    poseScore?: number;
+    posePass?: boolean;
+    brightness?: number;
+    sharpness?: number;
+    qualityScore?: number;
+    qualityPass?: boolean;
+    sunglasses?: boolean;
+    sunglassesConfidence?: number;
+    noSunglassesPass?: boolean;
+    topEmotion?: string;
+    emotionConfidence?: number;
+    emotionPass?: boolean;
+    faceArea?: number;
+    faceSizePass?: boolean;
+
     // Error handling
     error?: string;
   };

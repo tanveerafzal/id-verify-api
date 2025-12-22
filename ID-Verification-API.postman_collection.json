@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "ID Verification API",
-    "description": "Complete API collection for ID verification service with JWT authentication and user registration",
+    "description": "Complete API collection for ID verification service with JWT authentication, partner management, admin portal, and team management",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "version": "2.1.0"
   },
@@ -27,12 +27,65 @@
       "type": "string"
     },
     {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "partnerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "verificationId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "partnerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invitationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invitationToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string",
+      "description": "Partner API key for direct verification API access"
     }
   ],
   "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the API server is running and healthy. No authentication required."
+      },
+      "response": []
+    },
     {
       "name": "Authentication",
       "item": [
@@ -58,88 +111,9 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "auth", "register"]
             },
-            "description": "Register a new user account.\n\n**Required Fields:**\n- username (min 3 characters)\n- password (min 6 characters)\n\n**Optional Fields:**\n- email (must be valid email format)\n- role (ADMIN, USER, or API_CLIENT - defaults to USER)\n\n**Validation:**\n- Username must be unique\n- Email must be unique (if provided)\n- Password must be at least 6 characters"
+            "description": "Register a new user account.\n\n**Required Fields:**\n- username (min 3 characters)\n- password (min 6 characters)\n\n**Optional Fields:**\n- email (must be valid email format)\n- role (ADMIN, USER, or API_CLIENT - defaults to USER)"
           },
-          "response": [
-            {
-              "name": "Success Response",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"USER\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "auth", "register"]
-                }
-              },
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"user\": {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"username\": \"newuser\",\n      \"email\": \"newuser@example.com\",\n      \"role\": \"USER\"\n    }\n  },\n  \"message\": \"User registered successfully\"\n}"
-            },
-            {
-              "name": "Username Already Exists",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"username\": \"existinguser\",\n  \"password\": \"password123\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "auth", "register"]
-                }
-              },
-              "status": "Conflict",
-              "code": 409,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": false,\n  \"error\": \"Username already exists\"\n}"
-            },
-            {
-              "name": "Validation Error",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"username\": \"ab\",\n  \"password\": \"123\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/auth/register",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "auth", "register"]
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": false,\n  \"error\": \"Username must be at least 3 characters long\"\n}"
-            }
-          ]
+          "response": []
         },
         {
           "name": "Login",
@@ -148,7 +122,6 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "// Save auth token for subsequent requests",
                   "if (pm.response.code === 200) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('authToken', response.data.token);",
@@ -179,85 +152,1460 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "auth", "login"]
             },
-            "description": "Login to get JWT authentication token.\n\n**Note:** You must first register a user using the Register endpoint, or use an existing user account.\n\nThe token will be automatically saved and used for all subsequent requests."
+            "description": "Login to get JWT authentication token. The token will be automatically saved and used for subsequent requests."
           },
-          "response": [
-            {
-              "name": "Success Response",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/auth/login",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "auth", "login"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"expiresIn\": \"24h\",\n    \"tokenType\": \"Bearer\"\n  }\n}"
-            },
-            {
-              "name": "Invalid Credentials",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"username\": \"wrong\",\n  \"password\": \"wrong\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/auth/login",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "auth", "login"]
-                }
-              },
-              "status": "Unauthorized",
-              "code": 401,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": false,\n  \"error\": \"Invalid username or password\"\n}"
-            }
-          ]
+          "response": []
         }
       ],
-      "description": "Authentication endpoints for obtaining JWT tokens"
+      "description": "User authentication endpoints"
     },
     {
-      "name": "Health Check",
-      "request": {
-        "auth": {
-          "type": "noauth"
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Auth",
+          "item": [
+            {
+              "name": "Admin Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('adminToken', response.data.token);",
+                      "    console.log('Admin token saved successfully');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "login"]
+                },
+                "description": "Admin login to get JWT token. Token is automatically saved to adminToken variable."
+              },
+              "response": []
+            },
+            {
+              "name": "Admin Register",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"newadmin@example.com\",\n  \"password\": \"admin123\",\n  \"name\": \"New Admin\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "register"]
+                },
+                "description": "Register a new admin account. Consider protecting this endpoint in production."
+              },
+              "response": []
+            }
+          ],
+          "description": "Admin authentication endpoints"
         },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["health"]
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get Admin Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "profile"]
+                },
+                "description": "Get the current admin's profile information."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Admin Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Admin Name\",\n  \"email\": \"updated@example.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "profile"]
+                },
+                "description": "Update the current admin's profile information."
+              },
+              "response": []
+            },
+            {
+              "name": "Change Admin Password",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"admin123\",\n  \"newPassword\": \"newpassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/change-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "change-password"]
+                },
+                "description": "Change the current admin's password."
+              },
+              "response": []
+            }
+          ],
+          "description": "Admin profile management"
         },
-        "description": "Check if the API server is running and healthy. No authentication required."
-      },
-      "response": []
+        {
+          "name": "Dashboard",
+          "item": [
+            {
+              "name": "Get Dashboard Stats",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/dashboard-stats",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "dashboard-stats"]
+                },
+                "description": "Get dashboard statistics including verification counts, partner stats, etc."
+              },
+              "response": []
+            }
+          ],
+          "description": "Admin dashboard endpoints"
+        },
+        {
+          "name": "Partner Management",
+          "item": [
+            {
+              "name": "Get All Partners",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/partners",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "partners"]
+                },
+                "description": "Get a list of all partners."
+              },
+              "response": []
+            },
+            {
+              "name": "Create Partner",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('partnerId', response.data.id);",
+                      "    console.log('Partner ID saved:', response.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"companyName\": \"New Partner Company\",\n  \"email\": \"partner@example.com\",\n  \"password\": \"partner123\",\n  \"tier\": \"BASIC\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/partners",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "partners"]
+                },
+                "description": "Create a new partner account."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Partner by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/partners/{{partnerId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "partners", "{{partnerId}}"]
+                },
+                "description": "Get a specific partner by ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Partner",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"companyName\": \"Updated Partner Name\",\n  \"tier\": \"PROFESSIONAL\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/partners/{{partnerId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "partners", "{{partnerId}}"]
+                },
+                "description": "Update a partner's information."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Partner",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/partners/{{partnerId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "partners", "{{partnerId}}"]
+                },
+                "description": "Delete a partner."
+              },
+              "response": []
+            },
+            {
+              "name": "Toggle Partner Active Status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/partners/{{partnerId}}/toggle-active",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "partners", "{{partnerId}}", "toggle-active"]
+                },
+                "description": "Toggle a partner's active/inactive status."
+              },
+              "response": []
+            },
+            {
+              "name": "Reset Partner API Key",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/partners/{{partnerId}}/reset-api-key",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "partners", "{{partnerId}}", "reset-api-key"]
+                },
+                "description": "Reset a partner's API key."
+              },
+              "response": []
+            }
+          ],
+          "description": "Admin partner management endpoints"
+        },
+        {
+          "name": "Verification Management",
+          "item": [
+            {
+              "name": "Get All Verifications (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/verifications",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "verifications"]
+                },
+                "description": "Get all verifications across all partners."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Verification by ID (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/verifications/{{verificationId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "verifications", "{{verificationId}}"]
+                },
+                "description": "Get a specific verification by ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Manual Pass Verification",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Manual approval by admin\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/verifications/{{verificationId}}/manual-pass",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "verifications", "{{verificationId}}", "manual-pass"]
+                },
+                "description": "Manually pass a verification."
+              },
+              "response": []
+            },
+            {
+              "name": "Manual Fail Verification",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Document appears fraudulent\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/verifications/{{verificationId}}/manual-fail",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "verifications", "{{verificationId}}", "manual-fail"]
+                },
+                "description": "Manually fail a verification."
+              },
+              "response": []
+            },
+            {
+              "name": "Resend Verification Email (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/verifications/{{verificationId}}/resend-email",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "verifications", "{{verificationId}}", "resend-email"]
+                },
+                "description": "Resend verification email to the user."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Verification Details (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+1234567890\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/verifications/{{verificationId}}/details",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "verifications", "{{verificationId}}", "details"]
+                },
+                "description": "Update verification details."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Retry Count (Admin)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{adminToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"retryCount\": 0\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/verifications/{{verificationId}}/retry-count",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "verifications", "{{verificationId}}", "retry-count"]
+                },
+                "description": "Reset or update the verification retry count."
+              },
+              "response": []
+            }
+          ],
+          "description": "Admin verification management endpoints"
+        }
+      ],
+      "description": "Admin portal endpoints - require admin authentication"
     },
     {
-      "name": "Verifications",
+      "name": "Partner",
+      "item": [
+        {
+          "name": "Auth",
+          "item": [
+            {
+              "name": "Partner Register",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"companyName\": \"My Company\",\n  \"email\": \"partner@company.com\",\n  \"password\": \"password123\",\n  \"website\": \"https://company.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "register"]
+                },
+                "description": "Register a new partner account."
+              },
+              "response": []
+            },
+            {
+              "name": "Partner Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('partnerToken', response.data.token);",
+                      "    console.log('Partner token saved successfully');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"partner@company.com\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "login"]
+                },
+                "description": "Partner login to get JWT token. Token is automatically saved to partnerToken variable."
+              },
+              "response": []
+            },
+            {
+              "name": "Forgot Password",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"partner@company.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/forgot-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "forgot-password"]
+                },
+                "description": "Request a password reset email."
+              },
+              "response": []
+            },
+            {
+              "name": "Reset Password",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"reset-token-from-email\",\n  \"newPassword\": \"newpassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/reset-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "reset-password"]
+                },
+                "description": "Reset password using the token from the reset email."
+              },
+              "response": []
+            }
+          ],
+          "description": "Partner authentication endpoints"
+        },
+        {
+          "name": "Public",
+          "item": [
+            {
+              "name": "Get Tiers",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/tiers",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "tiers"]
+                },
+                "description": "Get available partner tiers and their features."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Public Partner Info",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/{{partnerId}}/public",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "{{partnerId}}", "public"]
+                },
+                "description": "Get public information about a partner (e.g., for branding on verification page)."
+              },
+              "response": []
+            }
+          ],
+          "description": "Public partner endpoints (no auth required)"
+        },
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get Partner Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "profile"]
+                },
+                "description": "Get the current partner's profile information."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Partner Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"companyName\": \"Updated Company Name\",\n  \"website\": \"https://updated-company.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "profile"]
+                },
+                "description": "Update the current partner's profile information."
+              },
+              "response": []
+            },
+            {
+              "name": "Change Partner Password",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/change-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "change-password"]
+                },
+                "description": "Change the current partner's password."
+              },
+              "response": []
+            },
+            {
+              "name": "Upload Logo",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "logo",
+                      "type": "file",
+                      "src": [],
+                      "description": "Company logo image (JPEG/PNG)"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/upload-logo",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "upload-logo"]
+                },
+                "description": "Upload a company logo for branding."
+              },
+              "response": []
+            },
+            {
+              "name": "Upgrade Tier",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tier\": \"PROFESSIONAL\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/upgrade-tier",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "upgrade-tier"]
+                },
+                "description": "Request to upgrade to a higher tier."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Usage Stats",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/usage-stats",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "usage-stats"]
+                },
+                "description": "Get usage statistics for the current billing period."
+              },
+              "response": []
+            }
+          ],
+          "description": "Partner profile management"
+        },
+        {
+          "name": "Verifications",
+          "item": [
+            {
+              "name": "Get Partner Verifications",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/verifications",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "verifications"]
+                },
+                "description": "Get all verifications for the current partner."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Partner Verification by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/verifications/{{verificationId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "verifications", "{{verificationId}}"]
+                },
+                "description": "Get a specific verification by ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Request Verification",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    if (response.data && response.data.id) {",
+                      "        pm.collectionVariables.set('verificationId', response.data.id);",
+                      "        console.log('Verification ID saved:', response.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userName\": \"John Doe\",\n  \"userEmail\": \"john.doe@example.com\",\n  \"userPhone\": \"+1234567890\",\n  \"type\": \"IDENTITY\",\n  \"webhookUrl\": \"https://your-webhook-url.com/callback\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/verifications/request",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "verifications", "request"]
+                },
+                "description": "Request a new verification for a user."
+              },
+              "response": []
+            },
+            {
+              "name": "Resend Verification Email",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/verifications/{{verificationId}}/resend-email",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "verifications", "{{verificationId}}", "resend-email"]
+                },
+                "description": "Resend the verification email to the user."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Verification Details",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fullName\": \"Jane Smith\",\n  \"email\": \"jane.smith@example.com\",\n  \"phone\": \"+1234567890\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/verifications/{{verificationId}}/details",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "verifications", "{{verificationId}}", "details"]
+                },
+                "description": "Update verification details before submission."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Retry Count",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"retryCount\": 0\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/verifications/{{verificationId}}/retry-count",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "verifications", "{{verificationId}}", "retry-count"]
+                },
+                "description": "Reset the verification retry count to allow user to retry."
+              },
+              "response": []
+            }
+          ],
+          "description": "Partner verification management"
+        }
+      ],
+      "description": "Partner portal endpoints"
+    },
+    {
+      "name": "Team",
+      "item": [
+        {
+          "name": "Public",
+          "item": [
+            {
+              "name": "Get Invitation Info",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/team/invitations/{{invitationToken}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "team", "invitations", "{{invitationToken}}"]
+                },
+                "description": "Get information about a team invitation using the invitation token."
+              },
+              "response": []
+            },
+            {
+              "name": "Accept Invitation",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"invitation-token-from-email\",\n  \"name\": \"John Doe\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/team/invitations/accept",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "team", "invitations", "accept"]
+                },
+                "description": "Accept a team invitation and create an account."
+              },
+              "response": []
+            }
+          ],
+          "description": "Public team endpoints (no auth required)"
+        },
+        {
+          "name": "Members",
+          "item": [
+            {
+              "name": "Get Team Members",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/team/members",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "team", "members"]
+                },
+                "description": "Get all team members for the current partner."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Roles",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/team/roles",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "team", "roles"]
+                },
+                "description": "Get available team member roles."
+              },
+              "response": []
+            },
+            {
+              "name": "Toggle User Status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/team/members/{{userId}}/toggle-status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "team", "members", "{{userId}}", "toggle-status"]
+                },
+                "description": "Toggle a team member's active/inactive status."
+              },
+              "response": []
+            },
+            {
+              "name": "Update User Role",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"ADMIN\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/team/members/{{userId}}/role",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "team", "members", "{{userId}}", "role"]
+                },
+                "description": "Update a team member's role."
+              },
+              "response": []
+            }
+          ],
+          "description": "Team member management"
+        },
+        {
+          "name": "Invitations",
+          "item": [
+            {
+              "name": "Send Invitation",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    if (response.data && response.data.id) {",
+                      "        pm.collectionVariables.set('invitationId', response.data.id);",
+                      "        console.log('Invitation ID saved:', response.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"newmember@example.com\",\n  \"role\": \"MEMBER\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/team/invitations",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "team", "invitations"]
+                },
+                "description": "Send an invitation to join the team."
+              },
+              "response": []
+            },
+            {
+              "name": "Resend Invitation",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/team/invitations/{{invitationId}}/resend",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "team", "invitations", "{{invitationId}}", "resend"]
+                },
+                "description": "Resend an invitation email."
+              },
+              "response": []
+            },
+            {
+              "name": "Cancel Invitation",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{partnerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/partners/team/invitations/{{invitationId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "partners", "team", "invitations", "{{invitationId}}"]
+                },
+                "description": "Cancel a pending invitation."
+              },
+              "response": []
+            }
+          ],
+          "description": "Team invitation management"
+        }
+      ],
+      "description": "Team management endpoints - require partner authentication"
+    },
+    {
+      "name": "Verifications (API)",
       "item": [
         {
           "name": "1. Create Verification",
@@ -266,7 +1614,6 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "// Save verification ID for subsequent requests",
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('verificationId', response.data.id);",
@@ -283,6 +1630,11 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "description": "Partner API key"
               }
             ],
             "body": {
@@ -294,74 +1646,41 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "verifications"]
             },
-            "description": "Create a new verification session. Types: IDENTITY, DOCUMENT_ONLY, SELFIE_ONLY, FULL_KYC\n\n**Requires authentication token.**"
+            "description": "Create a new verification session. Types: IDENTITY, DOCUMENT_ONLY, SELFIE_ONLY, FULL_KYC\n\n**Requires API key in X-API-Key header.**"
           },
-          "response": [
-            {
-              "name": "Success Response",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"userId\": \"user_12345\",\n  \"type\": \"FULL_KYC\",\n  \"metadata\": {\n    \"source\": \"mobile_app\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/verifications",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "verifications"]
-                }
-              },
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"userId\": \"user_12345\",\n    \"status\": \"PENDING\",\n    \"type\": \"FULL_KYC\",\n    \"createdAt\": \"2025-12-01T00:00:00.000Z\",\n    \"updatedAt\": \"2025-12-01T00:00:00.000Z\"\n  }\n}"
-            }
-          ]
+          "response": []
         },
         {
           "name": "2. Get Verification Status",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "description": "Partner API key"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "verifications", "{{verificationId}}"]
             },
-            "description": "Retrieve verification details and current status.\n\n**Requires authentication token.**"
+            "description": "Retrieve verification details and current status.\n\n**Requires API key in X-API-Key header.**"
           },
-          "response": [
-            {
-              "name": "Success Response",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "verifications", "{{verificationId}}"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"userId\": \"user_12345\",\n    \"status\": \"IN_PROGRESS\",\n    \"type\": \"FULL_KYC\",\n    \"documents\": [],\n    \"results\": null,\n    \"createdAt\": \"2025-12-01T00:00:00.000Z\",\n    \"updatedAt\": \"2025-12-01T00:00:00.000Z\"\n  }\n}"
-            }
-          ]
+          "response": []
         },
         {
           "name": "3. Upload Document (Front)",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "description": "Partner API key"
+              }
+            ],
             "body": {
               "mode": "formdata",
               "formdata": [
@@ -390,53 +1709,21 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "verifications", "{{verificationId}}", "documents"]
             },
-            "description": "Upload the front side of an ID document. The API will extract data using OCR.\n\n**Requires authentication token.**"
+            "description": "Upload the front side of an ID document. The API will extract data using OCR.\n\n**Requires API key in X-API-Key header.**"
           },
-          "response": [
-            {
-              "name": "Success Response",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "document",
-                      "type": "file",
-                      "src": []
-                    },
-                    {
-                      "key": "documentType",
-                      "value": "DRIVERS_LICENSE",
-                      "type": "text"
-                    },
-                    {
-                      "key": "side",
-                      "value": "FRONT",
-                      "type": "text"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/documents",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "verifications", "{{verificationId}}", "documents"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"document\": {\n      \"id\": \"doc_123\",\n      \"type\": \"DRIVERS_LICENSE\",\n      \"side\": \"FRONT\",\n      \"qualityScore\": 0.92\n    },\n    \"extractedData\": {\n      \"documentNumber\": \"DL123456789\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"dateOfBirth\": \"1990-01-15\",\n      \"expiryDate\": \"2028-05-20\",\n      \"issuingCountry\": \"USA\",\n      \"confidence\": 0.95\n    },\n    \"quality\": {\n      \"isBlurry\": false,\n      \"hasGlare\": false,\n      \"isComplete\": true,\n      \"qualityScore\": 0.92,\n      \"issues\": []\n    }\n  }\n}"
-            }
-          ]
+          "response": []
         },
         {
           "name": "4. Upload Document (Back)",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "description": "Partner API key"
+              }
+            ],
             "body": {
               "mode": "formdata",
               "formdata": [
@@ -463,7 +1750,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "verifications", "{{verificationId}}", "documents"]
             },
-            "description": "Upload the back side of an ID document (if applicable).\n\n**Requires authentication token.**"
+            "description": "Upload the back side of an ID document (if applicable).\n\n**Requires API key in X-API-Key header.**"
           },
           "response": []
         },
@@ -471,7 +1758,13 @@
           "name": "5. Upload Selfie",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "description": "Partner API key"
+              }
+            ],
             "body": {
               "mode": "formdata",
               "formdata": [
@@ -488,43 +1781,21 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "verifications", "{{verificationId}}", "selfie"]
             },
-            "description": "Upload a selfie photo for biometric verification and face matching.\n\n**Requires authentication token.**"
+            "description": "Upload a selfie photo for biometric verification and face matching.\n\n**Requires API key in X-API-Key header.**"
           },
-          "response": [
-            {
-              "name": "Success Response",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "selfie",
-                      "type": "file",
-                      "src": []
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/selfie",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "verifications", "{{verificationId}}", "selfie"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"faceDetected\": true,\n    \"faceCount\": 1,\n    \"faceQuality\": 0.89,\n    \"landmarks\": {\n      \"leftEye\": {\"x\": 120, \"y\": 150},\n      \"rightEye\": {\"x\": 180, \"y\": 150},\n      \"nose\": {\"x\": 150, \"y\": 180},\n      \"leftMouth\": {\"x\": 130, \"y\": 210},\n      \"rightMouth\": {\"x\": 170, \"y\": 210}\n    }\n  }\n}"
-            }
-          ]
+          "response": []
         },
         {
           "name": "6. Compare Faces",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "description": "Partner API key"
+              }
+            ],
             "body": {
               "mode": "formdata",
               "formdata": [
@@ -547,77 +1818,32 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "verifications", "{{verificationId}}", "compare-faces"]
             },
-            "description": "Compare face from ID document with selfie photo.\n\n**Requires authentication token.**"
+            "description": "Compare face from ID document with selfie photo.\n\n**Requires API key in X-API-Key header.**"
           },
-          "response": [
-            {
-              "name": "Success Response",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "images",
-                      "type": "file",
-                      "src": []
-                    },
-                    {
-                      "key": "images",
-                      "type": "file",
-                      "src": []
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/compare-faces",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "verifications", "{{verificationId}}", "compare-faces"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"match\": true,\n    \"similarity\": 0.94,\n    \"confidence\": 0.96,\n    \"threshold\": 0.80\n  }\n}"
-            }
-          ]
+          "response": []
         },
         {
           "name": "7. Submit Verification",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "description": "Partner API key"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/submit",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "verifications", "{{verificationId}}", "submit"]
             },
-            "description": "Submit the verification for final processing and decision.\n\n**Requires authentication token.**"
+            "description": "Submit the verification for final processing and decision.\n\n**Requires API key in X-API-Key header.**"
           },
-          "response": [
-            {
-              "name": "Success Response",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/verifications/{{verificationId}}/submit",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "v1", "verifications", "{{verificationId}}", "submit"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"passed\": true,\n    \"score\": 0.92,\n    \"riskLevel\": \"LOW\",\n    \"checks\": {\n      \"documentAuthentic\": true,\n      \"documentExpired\": false,\n      \"documentTampered\": false,\n      \"faceMatch\": true,\n      \"faceMatchScore\": 0.94,\n      \"livenessCheck\": true,\n      \"livenessScore\": 0.88\n    },\n    \"extractedData\": {\n      \"documentNumber\": \"DL123456789\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"fullName\": \"John Doe\",\n      \"dateOfBirth\": \"1990-01-15\",\n      \"issuingCountry\": \"USA\",\n      \"expiryDate\": \"2028-05-20\",\n      \"confidence\": 0.95\n    },\n    \"flags\": [],\n    \"warnings\": []\n  }\n}"
-            }
-          ]
+          "response": []
         }
       ],
-      "description": "All verification endpoints - require JWT authentication"
+      "description": "Direct verification API endpoints - require API key authentication (X-API-Key header)"
     }
   ]
 }
