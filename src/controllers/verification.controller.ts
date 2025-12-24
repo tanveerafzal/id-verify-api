@@ -145,9 +145,6 @@ export class VerificationController {
       console.log('Document processed successfully');
       console.log('Document type:', result.documentType);
       console.log('Document URL:', documentUrl);
-      if (result.detection) {
-        console.log('Auto-detection result:', result.detection);
-      }
 
       const updatedVerification = await verificationService.getVerification(verificationId);
 
@@ -168,11 +165,8 @@ export class VerificationController {
           quality: result.qualityCheck,
           documentType: result.documentType,
           userSelectedType: result.userSelectedType,
-          documentTypeCorrected: result.documentTypeCorrected,
-          documentTypeCorrectionMessage: result.documentTypeCorrectionMessage,
           documentUrl,
-          storageType: s3Service.isEnabled() ? 's3' : 'local',
-          ...(result.detection && { detection: result.detection })
+          storageType: s3Service.isEnabled() ? 's3' : 'local'
         }
       });
     } catch (error) {

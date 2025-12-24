@@ -195,73 +195,15 @@ export class VerificationService {
       throw new Error(`Document quality too low: ${qualityCheck.issues.join(', ')}`);
     }
 
-    // Auto-detect document type to validate against user selection
-    // Pass user-selected type to prioritize matching processors
-    console.log('[VerificationService] Auto-detecting document type...');
-    const detectionResult = await this.documentScanner.detectDocumentType(preprocessed, documentType);
-    console.log('[VerificationService] Auto-detected document type:', detectionResult.documentType,
-      'confidence:', detectionResult.confidence,
-      'method:', detectionResult.method);
-
-    // Fail if document type cannot be detected (OTHER type with low confidence or fallback method)
-    const isUndetectable = detectionResult.documentType === 'OTHER' ||
-                           detectionResult.method === 'fallback' ||
-                           detectionResult.confidence < 0.4;
-
-    if (isUndetectable && !documentType) {
-      // No user-provided type and we couldn't detect it
-      throw new Error('Unable to detect document type. Please ensure you upload a valid government-issued ID document (driver\'s license, passport, national ID, etc.)');
-    }
-
-    if (isUndetectable && documentType) {
-      // User provided a type but we couldn't confirm it's that type of document
-      const typeName = this.getDocumentTypeName(documentType);
-      throw new Error(`Unable to verify this is a ${typeName}. Please ensure you upload a clear image of a valid ${typeName}.`);
-    }
-
-    let finalDocumentType = detectionResult.documentType;
-    let documentTypeCorrected = false;
-    let documentTypeCorrectionMessage: string | null = null;
-
-    // If user provided a document type, check if it matches the detected type
-    if (documentType) {
-      console.log('[VerificationService] User selected document type:', documentType);
-      console.log('[VerificationService] Detected document type:', detectionResult.documentType);
-
-      // Check if the detected type matches the user-selected type
-      if (detectionResult.documentType !== documentType) {
-        // Check if detection is reliable (Document AI or high confidence Vision)
-        const isReliableDetection = detectionResult.confidence >= 0.5 &&
-          (detectionResult.method === 'document_ai' ||
-           (detectionResult.method === 'google_vision' && detectionResult.confidence >= 0.7));
-
-        if (isReliableDetection) {
-          // Use Document AI detected type and inform the user
-          const userTypeName = this.getDocumentTypeName(documentType);
-          const detectedTypeName = this.getDocumentTypeName(detectionResult.documentType);
-
-          documentTypeCorrected = true;
-          documentTypeCorrectionMessage = `You selected "${userTypeName}" but we detected this document as "${detectedTypeName}". We will proceed with the detected document type for more accurate verification.`;
-
-          console.log('[VerificationService] Document type corrected:', documentTypeCorrectionMessage);
-          finalDocumentType = detectionResult.documentType;
-        } else {
-          // Low confidence detection - trust user's selection
-          console.log('[VerificationService] Detection not reliable (confidence:', detectionResult.confidence,
-            ', method:', detectionResult.method, '), using user-selected type:', documentType);
-          finalDocumentType = documentType;
-        }
-      } else {
-        finalDocumentType = documentType;
-      }
-    }
+    // Use user-provided document type or default to DRIVERS_LICENSE
+    const finalDocumentType = documentType || DocumentType.DRIVERS_LICENSE;
+    console.log('[VerificationService] Using document type:', finalDocumentType);
 
     await this.ocrService.initialize();
-    // Pass cached Document AI entities if available to avoid redundant API call
+    // Extract document data using external OCR API (with fallback to Google services)
     const extractedData = await this.ocrService.extractDocumentData(
       preprocessed,
-      finalDocumentType,
-      detectionResult.documentAiEntities
+      finalDocumentType
     );
     await this.ocrService.terminate();
 
@@ -318,15 +260,8 @@ export class VerificationService {
     // Generate thumbnail for future use
     await this.documentScanner.generateThumbnail(preprocessed);
 
-    // Include detection info in extracted data if auto-detected
     const enrichedExtractedData = {
-      ...extractedData,
-      ...(detectionResult && {
-        autoDetected: true,
-        detectionConfidence: detectionResult.confidence,
-        detectionMethod: detectionResult.method,
-        detectedKeywords: detectionResult.detectedKeywords
-      })
+      ...extractedData
     };
 
     const document = await prisma.document.create({
@@ -354,10 +289,7 @@ export class VerificationService {
       extractedData: enrichedExtractedData,
       qualityCheck,
       documentType: finalDocumentType,
-      userSelectedType: documentType || null,
-      documentTypeCorrected,
-      documentTypeCorrectionMessage,
-      ...(detectionResult && { detection: detectionResult })
+      userSelectedType: documentType || null
     };
   }
 
