@@ -12,7 +12,7 @@ import { OCRService } from './ocr.service';
 import { BiometricService } from './biometric.service';
 import { EmailService } from './email.service';
 import { s3Service } from './s3.service';
-import { documentIdValidator } from './document-id-validator.service';
+// import { documentIdValidator } from './document-id-validator.service';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import https from 'https';
@@ -229,33 +229,32 @@ export class VerificationService {
       throw new Error(`Unable to extract ${missingFields.join(' and ')} from the document. Please upload a clearer image of your ${typeName} where all text is visible and readable.`);
     }
 
-    // Validate document ID number format
-    // Pass extracted person data for cross-validation (e.g., Ontario DL starts with last name initial)
-    const idValidation = documentIdValidator.validateDocumentId(
-      extractedData.documentNumber!,
-      finalDocumentType,
-      extractedData.issuingCountry,
-      {
-        firstName: extractedData.firstName,
-        lastName: extractedData.lastName,
-        fullName: extractedData.fullName,
-        dateOfBirth: extractedData.dateOfBirth
-      }
-    );
-
-    console.log('[VerificationService] Document ID validation:', {
-      documentNumber: idValidation.normalizedNumber,
-      isValid: idValidation.isValid,
-      country: idValidation.country,
-      state: idValidation.state,
-      errors: idValidation.errors,
-      warnings: idValidation.warnings
-    });
-
-    if (!idValidation.isValid) {
-      const typeName = this.getDocumentTypeName(finalDocumentType);
-      throw new Error(`Invalid ${typeName} number format: ${idValidation.errors.join('. ')}. Please ensure you uploaded a valid ${typeName}.`);
-    }
+    // Document ID validation commented out - using external OCR API
+    // const idValidation = documentIdValidator.validateDocumentId(
+    //   extractedData.documentNumber!,
+    //   finalDocumentType,
+    //   extractedData.issuingCountry,
+    //   {
+    //     firstName: extractedData.firstName,
+    //     lastName: extractedData.lastName,
+    //     fullName: extractedData.fullName,
+    //     dateOfBirth: extractedData.dateOfBirth
+    //   }
+    // );
+    //
+    // console.log('[VerificationService] Document ID validation:', {
+    //   documentNumber: idValidation.normalizedNumber,
+    //   isValid: idValidation.isValid,
+    //   country: idValidation.country,
+    //   state: idValidation.state,
+    //   errors: idValidation.errors,
+    //   warnings: idValidation.warnings
+    // });
+    //
+    // if (!idValidation.isValid) {
+    //   const typeName = this.getDocumentTypeName(finalDocumentType);
+    //   throw new Error(`Invalid ${typeName} number format: ${idValidation.errors.join('. ')}. Please ensure you uploaded a valid ${typeName}.`);
+    // }
 
     // Generate thumbnail for future use
     await this.documentScanner.generateThumbnail(preprocessed);
