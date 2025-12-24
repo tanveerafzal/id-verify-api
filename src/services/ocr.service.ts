@@ -265,13 +265,23 @@ export class OCRService {
   ): Promise<ExtractedDocumentData> {
     console.log('[OCRService] Extracting document data for type:', documentType);
 
-    // If we have cached Document AI entities from detection, use them directly (avoid redundant API call)
+    // FIRST PREFERENCE: Try external Document OCR API
+    try {
+      console.log('[OCRService] Trying external Document OCR API first...');
+      const externalResult = await this.extractWithExternalOcr(imageBuffer);
+      console.log('[OCRService] External OCR API succeeded, using extracted data');
+      return externalResult;
+    } catch (error) {
+      console.log('[OCRService] External OCR API failed, falling back to other methods:', error instanceof Error ? error.message : error);
+    }
+
+    // SECOND: If we have cached Document AI entities from detection, use them directly
     if (cachedDocumentAiEntities && cachedDocumentAiEntities.length > 0) {
       console.log('[OCRService] Using cached Document AI entities (', cachedDocumentAiEntities.length, 'entities) - skipping redundant API call');
       return this.extractFromCachedEntities(cachedDocumentAiEntities);
     }
 
-    // Try Document AI first if configured and document type is supported
+    // THIRD: Try Google Document AI if configured
     if (this.useDocumentAi && this.documentAiClient) {
       const processorId = this.getProcessorIdForDocumentType(documentType);
 
@@ -285,7 +295,7 @@ export class OCRService {
       }
     }
 
-    // Fallback to Vision API + regex parsing
+    // FOURTH: Fallback to Vision API + regex parsing
     console.log('[OCRService] Using Vision API + regex parsing for extraction');
     const { text, confidence } = await this.extractText(imageBuffer);
 
