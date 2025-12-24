@@ -1,9 +1,27 @@
 import Tesseract from 'tesseract.js';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { DocumentProcessorServiceClient } from '@google-cloud/documentai';
+import axios from 'axios';
 import { DocumentType, ExtractedDocumentData } from '../types/verification.types';
 import { DocumentAiEntity } from './document-scanner.service';
 import { config } from '../config';
+
+// Response type from external document OCR API
+interface ExternalOcrResponse {
+  success: boolean;
+  first_name: string | null;
+  last_name: string | null;
+  full_name: string | null;
+  document_number: string | null;
+  date_of_birth: string | null;
+  issue_date: string | null;
+  expiry_date: string | null;
+  gender: string | null;
+  address: string | null;
+  missing_fields: string[] | null;
+  processing_time_seconds: number;
+  error: string | null;
+}
 
 // Entity name mappings for different processor types
 // Custom extractors may use different field names than built-in processors
@@ -296,6 +314,209 @@ export class OCRService {
     console.log('[OCRService] Parsed extracted data:', extractedData);
 
     return extractedData;
+  }
+
+  /**
+   * Extract document data using the external Document OCR API
+   * This is an alternative OCR method that can be used instead of or alongside Google services
+   */
+  async extractWithExternalOcr(imageBuffer: Buffer): Promise<ExtractedDocumentData> {
+    const apiUrl = config.documentOcr.apiUrl;
+    const apiKey = config.documentOcr.apiKey;
+
+    console.log('[OCRService] Calling external Document OCR API');
+
+    try {
+      // Create form data with the image
+      const FormData = (await import('form-data')).default;
+      const formData = new FormData();
+      formData.append('file', imageBuffer, {
+        filename: 'document.jpg',
+        contentType: 'image/jpeg'
+      });
+
+      const response = await axios.post<ExternalOcrResponse>(apiUrl, formData, {
+        headers: {
+          'X-API-Key': apiKey,
+          ...formData.getHeaders()
+        },
+        timeout: 30000 // 30 second timeout
+      });
+
+      const data = response.data;
+
+      if (!data.success) {
+        throw new Error(data.error || 'External OCR API returned unsuccessful response');
+      }
+
+      console.log('[OCRService] External OCR API response received in', data.processing_time_seconds, 'seconds');
+
+      // Map the response to ExtractedDocumentData
+      const extractedData: ExtractedDocumentData = {
+        confidence: 0.95 // External API is highly accurate
+      };
+
+      if (data.first_name) {
+        extractedData.firstName = data.first_name;
+      }
+
+      if (data.last_name) {
+        extractedData.lastName = data.last_name;
+      }
+
+      if (data.full_name) {
+        extractedData.fullName = data.full_name;
+      } else if (extractedData.firstName || extractedData.lastName) {
+        extractedData.fullName = [extractedData.firstName, extractedData.lastName]
+          .filter(Boolean)
+          .join(' ');
+      }
+
+      if (data.document_number) {
+        extractedData.documentNumber = data.document_number;
+      }
+
+      if (data.date_of_birth) {
+        extractedData.dateOfBirth = this.normalizeExternalDate(data.date_of_birth);
+      }
+
+      if (data.issue_date) {
+        extractedData.issueDate = this.normalizeExternalDate(data.issue_date);
+      }
+
+      if (data.expiry_date) {
+        extractedData.expiryDate = this.normalizeExternalDate(data.expiry_date);
+      }
+
+      if (data.gender) {
+        extractedData.gender = data.gender.charAt(0).toUpperCase();
+      }
+
+      if (data.address) {
+        extractedData.address = this.parseExternalAddress(data.address);
+      }
+
+      // Log any missing fields for debugging
+      if (data.missing_fields && data.missing_fields.length > 0) {
+        console.log('[OCRService] External OCR missing fields:', data.missing_fields);
+      }
+
+      console.log('[OCRService] External OCR extracted data:', extractedData);
+
+      return extractedData;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('[OCRService] External OCR API request failed:', error.message);
+        if (error.response) {
+          console.error('[OCRService] Response status:', error.response.status);
+          console.error('[OCRService] Response data:', error.response.data);
+        }
+      } else {
+        console.error('[OCRService] External OCR extraction failed:', error);
+      }
+      throw new Error(`External OCR extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Normalize date from external OCR API format (YYYY/MM/DD) to standard format (YYYY-MM-DD)
+   */
+  private normalizeExternalDate(dateStr: string): string {
+    // Handle YYYY/MM/DD format from external API
+    if (dateStr.includes('/')) {
+      return dateStr.replace(/\//g, '-');
+    }
+    return dateStr;
+  }
+
+  /**
+   * Parse address string from external OCR API into structured format
+   * Example input: "57 KALMAR CRES RICHMOND HILL, ON, L4E 3Z4"
+   */
+  private parseExternalAddress(addressStr: string): ExtractedDocumentData['address'] {
+    // Try to parse Canadian format: "STREET, CITY, PROVINCE, POSTAL"
+    // or "STREET CITY, PROVINCE, POSTAL"
+    const parts = addressStr.split(',').map(p => p.trim());
+
+    if (parts.length >= 3) {
+      // Format: "STREET CITY, PROVINCE, POSTAL" or "STREET, CITY, PROVINCE POSTAL"
+      const streetAndCity = parts[0];
+      const province = parts[1].trim();
+      const postalCode = parts[2].trim();
+
+      // Try to detect Canadian postal code pattern (A1A 1A1)
+      const canadianPostalMatch = postalCode.match(/([A-Z]\d[A-Z]\s?\d[A-Z]\d)/i);
+      const usZipMatch = postalCode.match(/(\d{5}(?:-\d{4})?)/);
+
+      // Try to separate street from city in the first part
+      // Look for common patterns like "123 STREET NAME CITY"
+      const cityKeywords = ['HILL', 'VILLE', 'TOWN', 'CITY', 'HEIGHTS', 'PARK', 'VILLAGE', 'BEACH', 'LAKE', 'RIVER'];
+      let street = streetAndCity;
+      let city: string | undefined;
+
+      // If province contains postal code, extract it
+      const provincePostalMatch = province.match(/^([A-Z]{2})\s+([A-Z0-9\s]+)$/i);
+      let actualProvince = province;
+      let actualPostalCode = canadianPostalMatch ? canadianPostalMatch[1] : (usZipMatch ? usZipMatch[1] : postalCode);
+
+      if (provincePostalMatch) {
+        actualProvince = provincePostalMatch[1];
+        actualPostalCode = provincePostalMatch[2].trim();
+      }
+
+      // Try to find city in the street+city part by looking for the last word before common endings
+      for (const keyword of cityKeywords) {
+        const keywordIndex = streetAndCity.toUpperCase().indexOf(keyword);
+        if (keywordIndex > 0) {
+          // Find the start of the city name (word before the keyword or the keyword itself as part of city name)
+          const beforeKeyword = streetAndCity.substring(0, keywordIndex + keyword.length);
+          const words = beforeKeyword.trim().split(/\s+/);
+          if (words.length > 2) {
+            // Assume last 2 words are city name
+            city = words.slice(-2).join(' ');
+            street = words.slice(0, -2).join(' ');
+          }
+          break;
+        }
+      }
+
+      // Detect country from postal code format
+      const isCanadian = /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i.test(actualPostalCode);
+
+      return {
+        street,
+        city,
+        state: actualProvince,
+        postalCode: actualPostalCode,
+        country: isCanadian ? 'CAN' : 'USA'
+      };
+    } else if (parts.length === 2) {
+      // Format: "STREET, CITY STATE POSTAL"
+      const street = parts[0];
+      const cityStatePostal = parts[1];
+
+      // Try to parse "CITY STATE POSTAL"
+      const statePostalMatch = cityStatePostal.match(/(.+?)\s+([A-Z]{2})\s+([A-Z0-9\s]+)$/i);
+      if (statePostalMatch) {
+        return {
+          street,
+          city: statePostalMatch[1].trim(),
+          state: statePostalMatch[2],
+          postalCode: statePostalMatch[3].trim(),
+          country: /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i.test(statePostalMatch[3].trim()) ? 'CAN' : 'USA'
+        };
+      }
+
+      return {
+        street,
+        city: cityStatePostal
+      };
+    }
+
+    // Fallback: return the whole string as street
+    return {
+      street: addressStr
+    };
   }
 
   /**

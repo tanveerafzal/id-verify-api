@@ -60,6 +60,11 @@ export const config = {
     businessGroup: process.env.ULTRAREACH360_BUSINESS_GROUP || 'The ID verification Company'
   },
 
+  documentOcr: {
+    apiUrl: process.env.DOCUMENT_OCR_API_URL || 'https://document-ocr-960587958424.northamerica-northeast2.run.app/ocr/extract/image',
+    apiKey: process.env.DOCUMENT_OCR_API_KEY || 'xv1kXFoZsVUrKwsAnk0Qke1E5EAOQHjc-iB86R1lQHGVISRxdyDJT8kCAolpS92EX7WFO6ukmCI7'
+  },
+
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10)
