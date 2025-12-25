@@ -86,106 +86,37 @@ export class VerificationService {
 
     // Check if this is a retry (verification was FAILED)
     const isRetry = verification.status === 'FAILED';
+    let activeVerificationId = verificationId;
 
     if (isRetry) {
-      console.log('[VerificationService] Retry detected - clearing ALL old ID documents and verification result');
+      console.log('[VerificationService] Retry detected - creating new verification record');
 
-      // On retry, delete ALL old ID documents (not just matching types)
-      // This ensures we start fresh with the new document and don't mix old/new data
-      const validIdTypes = ['DRIVERS_LICENSE', 'PASSPORT', 'NATIONAL_ID', 'RESIDENCE_PERMIT', 'PERMANENT_RESIDENT_CARD'];
-      const oldIdDocs = verification.documents.filter(doc => validIdTypes.includes(doc.type));
+      // Find the root/original verification (in case of multiple retries)
+      const originalVerificationId = verification.parentVerificationId || verificationId;
 
-      if (oldIdDocs.length > 0) {
-        console.log(`[VerificationService] Deleting ${oldIdDocs.length} old ID document(s) from previous attempt`);
-
-        for (const doc of oldIdDocs) {
-          // Delete from S3 if URL exists
-          if (doc.originalUrl && doc.originalUrl !== 'not-saved') {
-            try {
-              const key = s3Service.extractKeyFromUrl(doc.originalUrl);
-              if (key && s3Service.isEnabled()) {
-                await s3Service.deleteFile(key);
-                console.log(`[VerificationService] Deleted old document from S3: ${key}`);
-              }
-            } catch (err) {
-              console.error('[VerificationService] Failed to delete old document from S3:', err);
-            }
-          }
-
-          // Delete from database
-          await prisma.document.delete({
-            where: { id: doc.id }
-          });
-        }
-      }
-
-      // Clear old verification result data
-      const existingResult = await prisma.verificationResult.findUnique({
-        where: { verificationId }
+      // Count existing retries to set retry number
+      const existingRetries = await prisma.verification.count({
+        where: { parentVerificationId: originalVerificationId }
       });
 
-      if (existingResult) {
-        console.log('[VerificationService] Clearing old verification result extracted data');
-        await prisma.verificationResult.update({
-          where: { verificationId },
-          data: {
-            extractedData: {},
-            extractedName: null,
-            extractedDob: null,
-            extractedAddress: null,
-            documentNumber: null,
-            issuingCountry: null,
-            expiryDate: null,
-            flags: [],
-            warnings: []
-          }
-        });
-      }
-
-      // Reset verification status to allow re-processing
-      await prisma.verification.update({
-        where: { id: verificationId },
-        data: { status: 'PENDING' }
+      // Create a new verification linked to the original
+      const newVerification = await prisma.verification.create({
+        data: {
+          userId: verification.userId,
+          partnerId: verification.partnerId,
+          type: verification.type,
+          status: VerificationStatus.PENDING,
+          webhookUrl: verification.webhookUrl,
+          metadata: verification.metadata as any,
+          parentVerificationId: originalVerificationId,
+          retryCount: existingRetries + 1
+        }
       });
 
-      console.log('[VerificationService] Old data cleared, ready for new document');
-    } else if (documentType) {
-      // Not a retry - just delete matching documents of the same type/side
-      const existingDocs = verification.documents.filter(doc => {
-        // For documents with sides (like driver's license), match type AND side
-        if (side) {
-          return doc.type === documentType && doc.side === side;
-        }
-        // For documents without sides (like passport), match just the type
-        return doc.type === documentType;
-      });
-
-      if (existingDocs.length > 0) {
-        console.log(`[VerificationService] Deleting ${existingDocs.length} existing ${documentType}${side ? ` (${side})` : ''} document(s) - keeping only the latest upload`);
-
-        for (const doc of existingDocs) {
-          // Delete from S3 if URL exists
-          if (doc.originalUrl && doc.originalUrl !== 'not-saved') {
-            try {
-              const key = s3Service.extractKeyFromUrl(doc.originalUrl);
-              if (key && s3Service.isEnabled()) {
-                await s3Service.deleteFile(key);
-                console.log(`[VerificationService] Deleted old document from S3: ${key}`);
-              }
-            } catch (err) {
-              console.error('[VerificationService] Failed to delete old document from S3:', err);
-            }
-          }
-
-          // Delete from database
-          await prisma.document.delete({
-            where: { id: doc.id }
-          });
-        }
-
-        console.log('[VerificationService] Old documents cleared');
-      }
+      console.log(`[VerificationService] Created new verification ${newVerification.id} (retry #${existingRetries + 1}) linked to original ${originalVerificationId}`);
+      activeVerificationId = newVerification.id;
     }
+
 
     const preprocessed = await this.documentScanner.preprocessImage(imageBuffer);
 
@@ -265,7 +196,7 @@ export class VerificationService {
 
     const document = await prisma.document.create({
       data: {
-        verificationId,
+        verificationId: activeVerificationId,
         type: finalDocumentType,
         side,
         originalUrl: documentUrl || 'not-saved',
@@ -279,7 +210,7 @@ export class VerificationService {
     });
 
     await prisma.verification.update({
-      where: { id: verificationId },
+      where: { id: activeVerificationId },
       data: { status: VerificationStatus.IN_PROGRESS }
     });
 
@@ -288,7 +219,10 @@ export class VerificationService {
       extractedData: enrichedExtractedData,
       qualityCheck,
       documentType: finalDocumentType,
-      userSelectedType: documentType || null
+      userSelectedType: documentType || null,
+      verificationId: activeVerificationId,
+      isRetry,
+      originalVerificationId: isRetry ? (verification.parentVerificationId || verificationId) : null
     };
   }
 

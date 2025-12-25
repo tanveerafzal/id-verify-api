@@ -116,30 +116,34 @@ model Tier {
 }
 
 model Verification {
-  id            String              @id @default(uuid())
-  userId        String?
-  status        VerificationStatus  @default(PENDING)
-  type          VerificationType
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  completedAt   DateTime?
-  metadata      Json?
-  ipAddress     String?
-  userAgent     String?
-  webhookUrl    String?
-  partnerId     String?
-  maxRetries    Int                 @default(5)
-  retryCount    Int                 @default(0)
-  documents     Document[]
-  partner       Partner?            @relation("PartnerVerifications", fields: [partnerId], references: [id])
-  user          User?               @relation("UserVerifications", fields: [userId], references: [id])
-  results       VerificationResult?
-  webhookEvents WebhookEvent[]
+  id                   String              @id @default(uuid())
+  userId               String?
+  status               VerificationStatus  @default(PENDING)
+  type                 VerificationType
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  completedAt          DateTime?
+  metadata             Json?
+  ipAddress            String?
+  userAgent            String?
+  webhookUrl           String?
+  partnerId            String?
+  maxRetries           Int                 @default(5)
+  retryCount           Int                 @default(0)
+  parentVerificationId String?
+  documents            Document[]
+  partner              Partner?            @relation("PartnerVerifications", fields: [partnerId], references: [id])
+  user                 User?               @relation("UserVerifications", fields: [userId], references: [id])
+  parentVerification   Verification?       @relation("VerificationRetries", fields: [parentVerificationId], references: [id])
+  retries              Verification[]      @relation("VerificationRetries")
+  results              VerificationResult?
+  webhookEvents        WebhookEvent[]
 
   @@index([userId])
   @@index([partnerId])
   @@index([status])
   @@index([createdAt])
+  @@index([parentVerificationId])
 }
 
 model Document {
