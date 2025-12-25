@@ -486,11 +486,34 @@ export class VerificationService {
                    !documentExpired &&
                    !documentTampered &&
                    !nameMismatchFailure &&
+                   faceMatch && // Face must match
                    livenessCheck; // Liveness must pass
+
+    // Calculate weighted verification score
+    // Weights: Document Quality 20%, Face Match 35%, Name Match 25%, Liveness 20%
+    const documentQualityScore = documentChecks.averageQuality || 0;
+    const normalizedFaceScore = faceMatch ? faceMatchScore : 0;
+    const normalizedNameScore = nameMatch ? nameMatchScore : 0;
+    const normalizedLivenessScore = livenessCheck ? livenessScore : 0;
+
+    const weightedScore = (
+      (documentQualityScore * 0.20) +
+      (normalizedFaceScore * 0.35) +
+      (normalizedNameScore * 0.25) +
+      (normalizedLivenessScore * 0.20)
+    );
+
+    console.log('[VerificationService] Score calculation:', {
+      documentQuality: `${(documentQualityScore * 100).toFixed(1)}% × 20% = ${(documentQualityScore * 0.20 * 100).toFixed(1)}%`,
+      faceMatch: `${(normalizedFaceScore * 100).toFixed(1)}% × 35% = ${(normalizedFaceScore * 0.35 * 100).toFixed(1)}%`,
+      nameMatch: `${(normalizedNameScore * 100).toFixed(1)}% × 25% = ${(normalizedNameScore * 0.25 * 100).toFixed(1)}%`,
+      liveness: `${(normalizedLivenessScore * 100).toFixed(1)}% × 20% = ${(normalizedLivenessScore * 0.20 * 100).toFixed(1)}%`,
+      total: `${(weightedScore * 100).toFixed(1)}%`
+    });
 
     const result: VerificationResult = {
       passed,
-      score: documentChecks.averageQuality,
+      score: weightedScore,
       riskLevel,
       checks: {
         documentAuthentic: !documentTampered,
