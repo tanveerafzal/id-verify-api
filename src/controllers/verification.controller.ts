@@ -271,7 +271,7 @@ export class VerificationController {
       console.log('[DEBUG] submitVerification - Request received for:', verificationId);
 
       // Check retry limit before processing
-      const verification = await verificationService.getVerification(verificationId);
+      let verification = await verificationService.getVerification(verificationId);
 
       if (!verification) {
         return res.status(404).json({
@@ -280,16 +280,28 @@ export class VerificationController {
         });
       }
 
+      // If this verification is FAILED, find the latest retry verification to use instead
+      let activeVerificationId = verificationId;
+      if (verification.status === 'FAILED') {
+        const latestRetry = await verificationService.getLatestRetryVerification(verificationId);
+        if (latestRetry && latestRetry.status !== 'FAILED' && latestRetry.status !== 'COMPLETED') {
+          console.log('[DEBUG] submitVerification - Found active retry verification:', latestRetry.id);
+          activeVerificationId = latestRetry.id;
+          verification = latestRetry;
+        }
+      }
+
       console.log('[DEBUG] submitVerification - Verification found:', {
-        id: verification.id,
-        status: verification.status,
-        retryCount: verification.retryCount,
-        maxRetries: verification.maxRetries,
-        documentsCount: verification.documents?.length || 0
+        id: verification!.id,
+        status: verification!.status,
+        retryCount: verification!.retryCount,
+        maxRetries: verification!.maxRetries,
+        documentsCount: verification!.documents?.length || 0,
+        activeVerificationId
       });
 
       // Check if verification has already been completed successfully
-      if (verification.status === 'COMPLETED') {
+      if (verification!.status === 'COMPLETED') {
         console.log('[DEBUG] submitVerification - BLOCKED: Already completed');
         return res.status(400).json({
           success: false,
@@ -298,25 +310,27 @@ export class VerificationController {
         });
       }
 
-      // Check retry limit
-      if (verification.retryCount >= verification.maxRetries) {
+      // Check retry limit (count all retries in the chain)
+      const totalRetries = await verificationService.getTotalRetryCount(verificationId);
+      const maxRetries = verification!.maxRetries;
+      if (totalRetries >= maxRetries) {
         console.log('[DEBUG] submitVerification - BLOCKED: Max retries reached', {
-          retryCount: verification.retryCount,
-          maxRetries: verification.maxRetries,
-          condition: `${verification.retryCount} >= ${verification.maxRetries} = ${verification.retryCount >= verification.maxRetries}`
+          totalRetries,
+          maxRetries,
+          condition: `${totalRetries} >= ${maxRetries} = ${totalRetries >= maxRetries}`
         });
         return res.status(429).json({
           success: false,
           error: 'Maximum retry limit reached',
           message: 'You have exceeded the maximum number of verification attempts. Please contact the organization that requested this verification to generate a new verification link.',
-          retryCount: verification.retryCount,
-          maxRetries: verification.maxRetries
+          retryCount: totalRetries,
+          maxRetries
         });
       }
 
       console.log('[DEBUG] submitVerification - ALLOWED: Proceeding with verification');
 
-      const result = await verificationService.performVerification(verificationId);
+      const result = await verificationService.performVerification(activeVerificationId);
 
       // Get updated verification to include retry info
       const updatedVerification = await verificationService.getVerification(verificationId);

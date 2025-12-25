@@ -929,6 +929,54 @@ export class VerificationService {
   }
 
   /**
+   * Get the latest retry verification for a given verification ID
+   * Looks for the most recent verification in the retry chain
+   */
+  async getLatestRetryVerification(verificationId: string): Promise<Awaited<ReturnType<typeof this.getVerification>> | null> {
+    // First check if this verification has any retries (children)
+    const latestRetry = await prisma.verification.findFirst({
+      where: { parentVerificationId: verificationId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        documents: true,
+        results: true,
+        user: true
+      }
+    });
+
+    if (latestRetry) {
+      // Recursively check if this retry has its own retries
+      const nestedRetry: Awaited<ReturnType<typeof this.getVerification>> | null = await this.getLatestRetryVerification(latestRetry.id);
+      return nestedRetry || latestRetry;
+    }
+
+    return null;
+  }
+
+  /**
+   * Get total retry count for a verification chain
+   * Counts all retries linked to the original verification
+   */
+  async getTotalRetryCount(verificationId: string): Promise<number> {
+    // Find the root verification (in case we're given a retry ID)
+    const verification = await prisma.verification.findUnique({
+      where: { id: verificationId }
+    });
+
+    if (!verification) return 0;
+
+    // If this is a retry, get the root verification
+    const rootId = verification.parentVerificationId || verificationId;
+
+    // Count all verifications that have this as parent (direct retries)
+    const count = await prisma.verification.count({
+      where: { parentVerificationId: rootId }
+    });
+
+    return count;
+  }
+
+  /**
    * Fetch image from URL (supports S3, HTTP/HTTPS, and local files)
    */
   private async fetchImageFromUrl(url: string): Promise<Buffer | null> {
