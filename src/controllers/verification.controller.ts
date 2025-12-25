@@ -392,7 +392,7 @@ export class VerificationController {
     try {
       const { verificationId } = req.params;
 
-      const verification = await verificationService.getVerification(verificationId);
+      let verification = await verificationService.getVerification(verificationId);
 
       if (!verification) {
         return res.status(404).json({
@@ -401,16 +401,31 @@ export class VerificationController {
         });
       }
 
-      // Calculate retry info
-      const remainingRetries = verification.maxRetries - verification.retryCount;
+      // If this verification is FAILED, check for active retry and return that instead
+      let activeRetryId: string | null = null;
+      if (verification.status === 'FAILED') {
+        const latestRetry = await verificationService.getLatestRetryVerification(verificationId);
+        if (latestRetry && latestRetry.status !== 'COMPLETED') {
+          console.log('[VerificationController] Returning active retry verification:', latestRetry.id);
+          activeRetryId = latestRetry.id;
+          verification = latestRetry;
+        }
+      }
+
+      // Calculate retry info based on total retries in the chain
+      const totalRetries = await verificationService.getTotalRetryCount(verificationId);
+      const maxRetries = verification.maxRetries;
+      const remainingRetries = maxRetries - totalRetries;
       const canRetry = verification.status === 'FAILED' && remainingRetries > 0;
 
       return res.status(200).json({
         success: true,
         data: {
           ...verification,
+          originalVerificationId: activeRetryId ? verificationId : null,
           canRetry,
           remainingRetries,
+          retryCount: totalRetries,
           retryMessage: canRetry
             ? `You have ${remainingRetries} attempt(s) remaining. Please re-upload your documents and try again.`
             : verification.status === 'FAILED'
