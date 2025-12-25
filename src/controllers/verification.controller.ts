@@ -284,8 +284,16 @@ export class VerificationController {
       let activeVerificationId = verificationId;
       if (verification.status === 'FAILED') {
         const latestRetry = await verificationService.getLatestRetryVerification(verificationId);
-        if (latestRetry && latestRetry.status !== 'FAILED' && latestRetry.status !== 'COMPLETED') {
-          console.log('[DEBUG] submitVerification - Found active retry verification:', latestRetry.id);
+        console.log('[DEBUG] submitVerification - Looking for retry, found:', latestRetry ? {
+          id: latestRetry.id,
+          status: latestRetry.status,
+          parentVerificationId: latestRetry.parentVerificationId,
+          documentsCount: latestRetry.documents?.length || 0
+        } : 'none');
+
+        // Use the latest retry if it exists and is not already completed
+        if (latestRetry && latestRetry.status !== 'COMPLETED') {
+          console.log('[DEBUG] submitVerification - Using retry verification:', latestRetry.id);
           activeVerificationId = latestRetry.id;
           verification = latestRetry;
         }

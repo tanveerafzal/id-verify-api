@@ -258,55 +258,20 @@ export class VerificationService {
     };
 
     // Save selfie as a document in the Document table
+    // Always create new selfie document to keep history of all attempts
     if (selfieUrl) {
       console.log('[VerificationService] Saving selfie as document:', selfieUrl);
 
-      // Check if selfie document already exists for this verification
-      const existingSelfie = await prisma.document.findFirst({
-        where: {
+      await prisma.document.create({
+        data: {
           verificationId,
-          type: 'SELFIE'
+          type: 'SELFIE',
+          originalUrl: selfieUrl,
+          qualityScore: biometricData.faceQuality || null,
+          isBlurry: false,
+          isComplete: true
         }
       });
-
-      if (existingSelfie) {
-        // Delete old selfie from S3 if it exists and is different from new one
-        if (existingSelfie.originalUrl &&
-            existingSelfie.originalUrl !== 'not-saved' &&
-            existingSelfie.originalUrl !== selfieUrl) {
-          try {
-            const oldKey = s3Service.extractKeyFromUrl(existingSelfie.originalUrl);
-            if (oldKey && s3Service.isEnabled()) {
-              await s3Service.deleteFile(oldKey);
-              console.log('[VerificationService] Deleted old selfie from S3:', oldKey);
-            }
-          } catch (err) {
-            console.error('[VerificationService] Failed to delete old selfie from S3:', err);
-          }
-        }
-
-        // Update existing selfie document
-        await prisma.document.update({
-          where: { id: existingSelfie.id },
-          data: {
-            originalUrl: selfieUrl,
-            qualityScore: biometricData.faceQuality || null,
-            updatedAt: new Date()
-          }
-        });
-      } else {
-        // Create new selfie document
-        await prisma.document.create({
-          data: {
-            verificationId,
-            type: 'SELFIE',
-            originalUrl: selfieUrl,
-            qualityScore: biometricData.faceQuality || null,
-            isBlurry: false,
-            isComplete: true
-          }
-        });
-      }
     }
 
     // Store liveness result in verification metadata
@@ -933,6 +898,8 @@ export class VerificationService {
    * Looks for the most recent verification in the retry chain
    */
   async getLatestRetryVerification(verificationId: string): Promise<Awaited<ReturnType<typeof this.getVerification>> | null> {
+    console.log('[VerificationService] Looking for retries of verification:', verificationId);
+
     // First check if this verification has any retries (children)
     const latestRetry = await prisma.verification.findFirst({
       where: { parentVerificationId: verificationId },
@@ -943,6 +910,8 @@ export class VerificationService {
         user: true
       }
     });
+
+    console.log('[VerificationService] Found retry:', latestRetry ? latestRetry.id : 'none');
 
     if (latestRetry) {
       // Recursively check if this retry has its own retries
