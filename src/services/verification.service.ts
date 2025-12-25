@@ -894,15 +894,15 @@ export class VerificationService {
   }
 
   /**
-   * Get the latest retry verification for a given verification ID
-   * Looks for the most recent verification in the retry chain
+   * Get the latest retry verification for a given parent verification ID
+   * Returns the most recent retry linked to the parent
    */
-  async getLatestRetryVerification(verificationId: string): Promise<Awaited<ReturnType<typeof this.getVerification>> | null> {
-    console.log('[VerificationService] Looking for retries of verification:', verificationId);
+  async getLatestRetryVerification(parentVerificationId: string): Promise<Awaited<ReturnType<typeof this.getVerification>> | null> {
+    console.log('[VerificationService] Looking for retries of verification:', parentVerificationId);
 
-    // First check if this verification has any retries (children)
+    // Find the latest retry that has this verification as parent
     const latestRetry = await prisma.verification.findFirst({
-      where: { parentVerificationId: verificationId },
+      where: { parentVerificationId },
       orderBy: { createdAt: 'desc' },
       include: {
         documents: true,
@@ -913,13 +913,7 @@ export class VerificationService {
 
     console.log('[VerificationService] Found retry:', latestRetry ? latestRetry.id : 'none');
 
-    if (latestRetry) {
-      // Recursively check if this retry has its own retries
-      const nestedRetry: Awaited<ReturnType<typeof this.getVerification>> | null = await this.getLatestRetryVerification(latestRetry.id);
-      return nestedRetry || latestRetry;
-    }
-
-    return null;
+    return latestRetry;
   }
 
   /**
