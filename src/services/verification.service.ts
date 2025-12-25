@@ -227,6 +227,21 @@ export class VerificationService {
   }
 
   async processSelfie(verificationId: string, imageBuffer: Buffer, selfieUrl?: string) {
+    // Check if this verification has a retry - use the retry verification instead
+    const verification = await prisma.verification.findUnique({
+      where: { id: verificationId }
+    });
+
+    let activeVerificationId = verificationId;
+
+    if (verification?.status === 'FAILED') {
+      const latestRetry = await this.getLatestRetryVerification(verificationId);
+      if (latestRetry && latestRetry.status !== 'COMPLETED') {
+        console.log('[VerificationService] Using retry verification for selfie:', latestRetry.id);
+        activeVerificationId = latestRetry.id;
+      }
+    }
+
     const biometricData = await this.biometricService.extractFaceData(imageBuffer);
 
     if (!biometricData.faceDetected) {
@@ -260,11 +275,11 @@ export class VerificationService {
     // Save selfie as a document in the Document table
     // Always create new selfie document to keep history of all attempts
     if (selfieUrl) {
-      console.log('[VerificationService] Saving selfie as document:', selfieUrl);
+      console.log('[VerificationService] Saving selfie to verification:', activeVerificationId);
 
       await prisma.document.create({
         data: {
-          verificationId,
+          verificationId: activeVerificationId,
           type: 'SELFIE',
           originalUrl: selfieUrl,
           qualityScore: biometricData.faceQuality || null,
@@ -276,7 +291,7 @@ export class VerificationService {
 
     // Store liveness result in verification metadata
     await prisma.verification.update({
-      where: { id: verificationId },
+      where: { id: activeVerificationId },
       data: {
         metadata: {
           livenessCheck: livenessResult.isLive,
