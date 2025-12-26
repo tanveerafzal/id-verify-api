@@ -132,8 +132,9 @@ export class OCRService {
 
   private initializeGoogleServices(): void {
     try {
-      // Check if Google Cloud credentials are configured
-      if (process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_CLOUD_PROJECT) {
+      // Only initialize if GOOGLE_APPLICATION_CREDENTIALS is set to a non-empty value
+      const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim();
+      if (credentialsPath && credentialsPath.length > 0) {
         // Initialize Vision API (for face detection and fallback OCR)
         this.visionClient = new ImageAnnotatorClient();
         this.useGoogleVision = true;

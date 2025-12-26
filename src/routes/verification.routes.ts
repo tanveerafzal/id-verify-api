@@ -10,7 +10,7 @@ const router = Router();
 const controller = new VerificationController();
 
 // Check if S3 is configured
-const isS3Configured = !!(process.env.AWS_S3_BUCKET && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+const isS3Configured = !!(process.env.S3_BUCKET_NAME && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
 
 // Use memory storage for S3, disk storage for local
 const storage = isS3Configured

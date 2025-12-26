@@ -438,9 +438,21 @@ export class VerificationController {
       const remainingRetries = maxRetries - totalRetries;
       const canRetry = verification.status === 'FAILED' && remainingRetries > 0;
 
-      // If user can retry, clear old results so frontend doesn't show old errors
-      // This allows user to start fresh without seeing previous failure messages
-      const resultsToReturn = canRetry ? null : verification.results;
+      // Determine if this is a fresh retry attempt (user is starting over)
+      // vs. a completed verification (show results)
+      const isActiveRetry = activeRetryId !== null;
+      const isFreshStart = canRetry && (verification.status === 'PENDING' || verification.status === 'IN_PROGRESS');
+
+      // Only show errors/results when:
+      // 1. Verification is COMPLETED (passed)
+      // 2. Verification is FAILED and cannot retry (max retries reached)
+      // 3. The current verification (not retry) just failed
+      const showErrors = verification.status === 'COMPLETED' ||
+                         (verification.status === 'FAILED' && !canRetry) ||
+                         (verification.status === 'FAILED' && !isActiveRetry && verification.results !== null);
+
+      // If user can retry and is on a fresh attempt, clear old results
+      const resultsToReturn = (canRetry && (isFreshStart || isActiveRetry)) ? null : verification.results;
 
       return res.status(200).json({
         success: true,
@@ -451,6 +463,8 @@ export class VerificationController {
           canRetry,
           remainingRetries,
           retryCount: totalRetries,
+          isRetryInProgress: isActiveRetry || isFreshStart,
+          showErrors,
           retryMessage: canRetry
             ? `You have ${remainingRetries} attempt(s) remaining. Please re-upload your documents and try again.`
             : verification.status === 'FAILED'
