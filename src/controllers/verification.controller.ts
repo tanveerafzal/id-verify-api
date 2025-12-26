@@ -64,11 +64,15 @@ export class VerificationController {
       }
 
       // Allow uploads for PENDING, IN_PROGRESS, or FAILED (for retry) statuses
+      // Check total retries across the entire verification chain
+      const totalRetries = await verificationService.getTotalRetryCount(verificationId);
+      const maxRetries = verification.maxRetries;
+
       console.log('[DEBUG] uploadDocument - Verification found:', {
         id: verification.id,
         status: verification.status,
-        retryCount: verification.retryCount,
-        maxRetries: verification.maxRetries
+        totalRetries,
+        maxRetries
       });
 
       if (verification.status === 'COMPLETED') {
@@ -79,17 +83,19 @@ export class VerificationController {
         });
       }
 
-      // Check retry limit for failed verifications
-      if (verification.status === 'FAILED' && verification.retryCount >= verification.maxRetries) {
+      // Check retry limit BEFORE allowing any upload
+      if (verification.status === 'FAILED' && totalRetries >= maxRetries) {
         console.log('[DEBUG] uploadDocument - BLOCKED: Max retries reached', {
-          retryCount: verification.retryCount,
-          maxRetries: verification.maxRetries,
-          condition: `${verification.retryCount} >= ${verification.maxRetries} = ${verification.retryCount >= verification.maxRetries}`
+          totalRetries,
+          maxRetries,
+          condition: `${totalRetries} >= ${maxRetries} = ${totalRetries >= maxRetries}`
         });
         return res.status(429).json({
           success: false,
           error: 'Maximum retry limit reached',
-          message: 'You have exceeded the maximum number of verification attempts.'
+          message: 'You have exceeded the maximum number of verification attempts. Please contact the organization that requested this verification to generate a new verification link.',
+          retryCount: totalRetries,
+          maxRetries
         });
       }
 
@@ -192,6 +198,17 @@ export class VerificationController {
         });
       }
 
+      // Check total retries across the entire verification chain
+      const totalRetries = await verificationService.getTotalRetryCount(verificationId);
+      const maxRetries = verification.maxRetries;
+
+      console.log('[DEBUG] uploadSelfie - Verification found:', {
+        id: verification.id,
+        status: verification.status,
+        totalRetries,
+        maxRetries
+      });
+
       // Allow uploads for PENDING, IN_PROGRESS, or FAILED (for retry) statuses
       if (verification.status === 'COMPLETED') {
         return res.status(400).json({
@@ -200,12 +217,15 @@ export class VerificationController {
         });
       }
 
-      // Check retry limit for failed verifications
-      if (verification.status === 'FAILED' && verification.retryCount >= verification.maxRetries) {
+      // Check retry limit BEFORE allowing any upload
+      if (verification.status === 'FAILED' && totalRetries >= maxRetries) {
+        console.log('[DEBUG] uploadSelfie - BLOCKED: Max retries reached');
         return res.status(429).json({
           success: false,
           error: 'Maximum retry limit reached',
-          message: 'You have exceeded the maximum number of verification attempts.'
+          message: 'You have exceeded the maximum number of verification attempts. Please contact the organization that requested this verification to generate a new verification link.',
+          retryCount: totalRetries,
+          maxRetries
         });
       }
 
@@ -418,10 +438,15 @@ export class VerificationController {
       const remainingRetries = maxRetries - totalRetries;
       const canRetry = verification.status === 'FAILED' && remainingRetries > 0;
 
+      // If user can retry, clear old results so frontend doesn't show old errors
+      // This allows user to start fresh without seeing previous failure messages
+      const resultsToReturn = canRetry ? null : verification.results;
+
       return res.status(200).json({
         success: true,
         data: {
           ...verification,
+          results: resultsToReturn,
           originalVerificationId: activeRetryId ? verificationId : null,
           canRetry,
           remainingRetries,
