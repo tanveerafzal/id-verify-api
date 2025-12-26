@@ -311,11 +311,19 @@ export class VerificationController {
           documentsCount: latestRetry.documents?.length || 0
         } : 'none');
 
-        // Use the latest retry if it exists and is not already completed
-        if (latestRetry && latestRetry.status !== 'COMPLETED') {
+        // Use the latest retry if it exists and is still in progress (PENDING or IN_PROGRESS)
+        // If the retry is already FAILED, user needs to upload new documents first
+        if (latestRetry && (latestRetry.status === 'PENDING' || latestRetry.status === 'IN_PROGRESS')) {
           console.log('[DEBUG] submitVerification - Using retry verification:', latestRetry.id);
           activeVerificationId = latestRetry.id;
           verification = latestRetry;
+        } else if (latestRetry && latestRetry.status === 'FAILED') {
+          console.log('[DEBUG] submitVerification - Latest retry already failed, user needs to upload new documents');
+          return res.status(400).json({
+            success: false,
+            error: 'Verification already processed',
+            message: 'This verification attempt has already been completed. Please upload new documents to try again.'
+          });
         }
       }
 
@@ -421,14 +429,20 @@ export class VerificationController {
         });
       }
 
-      // If this verification is FAILED, check for active retry and return that instead
+      // If this verification is FAILED, check for active retry (still in progress) and return that instead
+      // Only consider a retry as "active" if it's PENDING or IN_PROGRESS, not if it has already FAILED
       let activeRetryId: string | null = null;
       if (verification.status === 'FAILED') {
         const latestRetry = await verificationService.getLatestRetryVerification(verificationId);
-        if (latestRetry && latestRetry.status !== 'COMPLETED') {
+        if (latestRetry && (latestRetry.status === 'PENDING' || latestRetry.status === 'IN_PROGRESS')) {
           console.log('[VerificationController] Returning active retry verification:', latestRetry.id);
           activeRetryId = latestRetry.id;
           verification = latestRetry;
+        } else if (latestRetry && latestRetry.status === 'FAILED') {
+          // The retry also failed - return the retry's data to show its results
+          console.log('[VerificationController] Returning failed retry verification:', latestRetry.id);
+          verification = latestRetry;
+          // Don't set activeRetryId - this retry is not "active", it has completed (with failure)
         }
       }
 
