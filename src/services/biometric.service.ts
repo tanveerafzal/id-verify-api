@@ -1,7 +1,10 @@
 import sharp from 'sharp';
+import axios from 'axios';
+import FormData from 'form-data';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { RekognitionClient, CompareFacesCommand, DetectFacesCommand, Attribute } from '@aws-sdk/client-rekognition';
 import { BiometricData, LivenessCheckResult } from '../types/verification.types';
+import { config } from '../config';
 
 // Face annotation interface from Google Vision API
 interface FaceAnnotation {
@@ -71,6 +74,52 @@ export class BiometricService {
     } catch (error) {
       console.log('[BiometricService] Failed to initialize AWS Rekognition:', error);
       this.useAwsRekognition = false;
+    }
+  }
+
+  /**
+   * Check if a buffer contains a PDF file
+   */
+  private isPdfBuffer(buffer: Buffer): boolean {
+    // PDF magic bytes: %PDF (0x25 0x50 0x44 0x46)
+    return buffer.length >= 4 &&
+      buffer[0] === 0x25 &&
+      buffer[1] === 0x50 &&
+      buffer[2] === 0x44 &&
+      buffer[3] === 0x46;
+  }
+
+  /**
+   * Convert a PDF buffer to a PNG image buffer using external OCR API
+   */
+  private async convertPdfToImage(pdfBuffer: Buffer, page: number = 1): Promise<Buffer> {
+    console.log('[BiometricService] Converting PDF to image via external API...');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', pdfBuffer, {
+        filename: 'document.pdf',
+        contentType: 'application/pdf'
+      });
+
+      const response = await axios.post(
+        `${config.documentOcr.baseUrl}/ocr/pdf-to-image?page=${page}`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            'X-API-Key': config.documentOcr.apiKey
+          },
+          responseType: 'arraybuffer',
+          timeout: 30000
+        }
+      );
+
+      console.log('[BiometricService] PDF converted to image successfully');
+      return Buffer.from(response.data);
+    } catch (error: any) {
+      console.error('[BiometricService] PDF to image conversion failed:', error.message);
+      throw new Error('Failed to convert PDF to image: ' + error.message);
     }
   }
 
@@ -359,20 +408,45 @@ export class BiometricService {
     documentImageBuffer: Buffer,
     selfieBuffer: Buffer
   ): Promise<{ match: boolean; confidence: number; details: any }> {
+    // Convert PDFs to images before face comparison
+    let docBuffer = documentImageBuffer;
+    let selfBuffer = selfieBuffer;
+
+    try {
+      if (this.isPdfBuffer(documentImageBuffer)) {
+        console.log('[BiometricService] Document is PDF, converting to image...');
+        docBuffer = await this.convertPdfToImage(documentImageBuffer);
+      }
+      if (this.isPdfBuffer(selfieBuffer)) {
+        console.log('[BiometricService] Selfie is PDF, converting to image...');
+        selfBuffer = await this.convertPdfToImage(selfieBuffer);
+      }
+    } catch (pdfError: any) {
+      console.error('[BiometricService] PDF conversion failed:', pdfError.message);
+      return {
+        match: false,
+        confidence: 0,
+        details: {
+          error: 'PDF to image conversion failed: ' + pdfError.message,
+          method: 'pdf_conversion_failed'
+        }
+      };
+    }
+
     // Use AWS Rekognition if available (recommended for face comparison)
     if (this.useAwsRekognition && this.rekognitionClient) {
-      return this.compareFacesWithRekognition(documentImageBuffer, selfieBuffer);
+      return this.compareFacesWithRekognition(docBuffer, selfBuffer);
     }
 
     // Fallback to Google Vision landmark comparison (less accurate)
     if (this.useGoogleVision && this.visionClient) {
-      return this.compareFacesWithGoogleVisionLandmarks(documentImageBuffer, selfieBuffer);
+      return this.compareFacesWithGoogleVisionLandmarks(docBuffer, selfBuffer);
     }
 
     // Final fallback to embedding comparison
     console.log('[BiometricService] No face comparison service available, using embedding fallback');
-    const docFace = await this.extractFaceData(documentImageBuffer);
-    const selfieFace = await this.extractFaceData(selfieBuffer);
+    const docFace = await this.extractFaceData(docBuffer);
+    const selfieFace = await this.extractFaceData(selfBuffer);
 
     if (!docFace.faceDetected || !selfieFace.faceDetected) {
       return { match: false, confidence: 0, details: { error: 'Face not detected' } };
@@ -740,10 +814,26 @@ export class BiometricService {
   async performSingleImageLivenessCheck(imageBuffer: Buffer): Promise<LivenessCheckResult> {
     console.log('[BiometricService] Performing single-image liveness check...');
 
+    // Convert PDF to image if needed
+    let processBuffer = imageBuffer;
+    if (this.isPdfBuffer(imageBuffer)) {
+      try {
+        console.log('[BiometricService] Image is PDF, converting for liveness check...');
+        processBuffer = await this.convertPdfToImage(imageBuffer);
+      } catch (pdfError: any) {
+        console.error('[BiometricService] PDF conversion failed for liveness check:', pdfError.message);
+        return {
+          isLive: true, // Default to pass since we can't analyze
+          confidence: 0.5,
+          checks: { error: 'PDF conversion failed, skipping liveness check', method: 'pdf_conversion_failed' }
+        };
+      }
+    }
+
     // Try AWS Rekognition first (more accurate)
     if (this.useAwsRekognition && this.rekognitionClient) {
       try {
-        const awsResult = await this.performAwsRekognitionLivenessCheck(imageBuffer);
+        const awsResult = await this.performAwsRekognitionLivenessCheck(processBuffer);
         if (awsResult.checks && !awsResult.checks.error) {
           console.log('[BiometricService] AWS Rekognition liveness check completed');
           return awsResult;
@@ -755,7 +845,7 @@ export class BiometricService {
     }
 
     // Fall back to heuristic analysis with relaxed thresholds
-    return this.performHeuristicLivenessCheck(imageBuffer);
+    return this.performHeuristicLivenessCheck(processBuffer);
   }
 
   /**

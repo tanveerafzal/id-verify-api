@@ -61,6 +61,7 @@ export const config = {
   },
 
   documentOcr: {
+    baseUrl: process.env.DOCUMENT_OCR_BASE_URL || 'https://document-ocr-960587958424.northamerica-northeast2.run.app',
     apiUrl: process.env.DOCUMENT_OCR_API_URL || 'https://document-ocr-960587958424.northamerica-northeast2.run.app/ocr/extract/image',
     apiKey: process.env.DOCUMENT_OCR_API_KEY || 'xv1kXFoZsVUrKwsAnk0Qke1E5EAOQHjc-iB86R1lQHGVISRxdyDJT8kCAolpS92EX7WFO6ukmCI7'
   },
