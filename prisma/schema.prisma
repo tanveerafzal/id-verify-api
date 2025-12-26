@@ -9,14 +9,18 @@ datasource db {
 
 model User {
   id            String         @id @default(uuid())
-  email         String         @unique
+  email         String
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   fullName      String?
   phone         String?
   verifications Verification[] @relation("UserVerifications")
 
+  // Users are uniquely identified by email + fullName combination
+  // This allows same email with different names to be separate users
+  @@unique([email, fullName])
   @@index([email])
+  @@index([fullName])
 }
 
 model Partner {

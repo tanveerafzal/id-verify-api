@@ -558,7 +558,31 @@ export class VerificationService {
     console.log('  - faceMatchScore:', faceMatchScore);
     console.log('  - passed:', passed);
 
+    // Parse dates using helper that handles various formats (including Canadian bilingual)
+    const parsedDob = this.parseDate(extractedData.dateOfBirth);
+    const parsedExpiry = this.parseDate(extractedData.expiryDate);
+
+    console.log('[VerificationService] Parsed dates:', {
+      rawDob: extractedData.dateOfBirth,
+      parsedDob: parsedDob?.toISOString() || null,
+      rawExpiry: extractedData.expiryDate,
+      parsedExpiry: parsedExpiry?.toISOString() || null
+    });
+
+    // Update extractedData with parsed dates in ISO format for frontend
+    // This ensures the frontend receives dates it can parse
+    if (parsedDob) {
+      extractedData.dateOfBirth = parsedDob.toISOString().split('T')[0]; // YYYY-MM-DD format
+    }
+    if (parsedExpiry) {
+      extractedData.expiryDate = parsedExpiry.toISOString().split('T')[0]; // YYYY-MM-DD format
+    }
+
+    // Update the result object with the formatted extractedData
+    result.extractedData = extractedData;
+
     console.log('Use upsert to handle both new and retry scenarios');
+
     try {
       await prisma.verificationResult.upsert({
         where: { verificationId },
@@ -573,11 +597,11 @@ export class VerificationService {
           faceMatch,
           faceMatchScore,
           extractedName: extractedData.fullName || null,
-          extractedDob: extractedData.dateOfBirth ? new Date(extractedData.dateOfBirth) : null,
+          extractedDob: parsedDob,
           extractedAddress: addressString,
           documentNumber: extractedData.documentNumber || null,
           issuingCountry: extractedData.issuingCountry || null,
-          expiryDate: extractedData.expiryDate ? new Date(extractedData.expiryDate) : null,
+          expiryDate: parsedExpiry,
           extractedData: extractedData as any,
           flags,
           warnings,
@@ -595,37 +619,60 @@ export class VerificationService {
           faceMatch,
           faceMatchScore,
           extractedName: extractedData.fullName || null,
-          extractedDob: extractedData.dateOfBirth ? new Date(extractedData.dateOfBirth) : null,
+          extractedDob: parsedDob,
           extractedAddress: addressString,
           documentNumber: extractedData.documentNumber || null,
           issuingCountry: extractedData.issuingCountry || null,
-          expiryDate: extractedData.expiryDate ? new Date(extractedData.expiryDate) : null,
+          expiryDate: parsedExpiry,
           extractedData: extractedData as any,
           flags,
           warnings
         }
       });
       console.log('verification.update');
+      const newStatus = passed ? VerificationStatus.COMPLETED : VerificationStatus.FAILED;
+      const completedAt = new Date();
+
+      // Update the current verification (could be original or retry)
       await prisma.verification.update({
         where: { id: verificationId },
         data: {
-          status: passed ? VerificationStatus.COMPLETED : VerificationStatus.FAILED,
-          completedAt: passed ? new Date() : undefined,
+          status: newStatus,
+          completedAt, // Always set completedAt when verification is processed (success or failure)
           // Increment retry count if verification failed
           retryCount: passed ? undefined : {
             increment: 1
           }
         }
       });
-    } catch (emailError) {
+
+      // If this is a retry verification, also update the parent verification
+      // This ensures the parent reflects the latest status
+      if (verification.parentVerificationId) {
+        console.log('[VerificationService] Updating parent verification:', verification.parentVerificationId);
+        await prisma.verification.update({
+          where: { id: verification.parentVerificationId },
+          data: {
+            status: newStatus,
+            completedAt,
+            // Also update retry count on parent to track total attempts
+            retryCount: {
+              increment: 1
+            }
+          }
+        });
+      }
+    } catch (dbError) {
       // Log error but don't fail the verification
-      logger.error('[VerificationService] Failed to update verificationResult:', emailError);
+      logger.error('[VerificationService] Failed to update verification status:', dbError);
     }
-  console.log('Send email notification to partner');
+    console.log('Send email notification to partner');
     // Send email notification to partner
+    // For retry verifications, get partner info from parent verification
     try {
+      const lookupId = verification.parentVerificationId || verificationId;
       const verificationWithDetails = await prisma.verification.findUnique({
-        where: { id: verificationId },
+        where: { id: lookupId },
         include: {
           partner: {
             include: {
@@ -659,7 +706,11 @@ export class VerificationService {
           );
 
           logger.info(`[VerificationService] Partner notification email sent successfully`);
+        } else {
+          logger.warn(`[VerificationService] No partner email found for verification: ${lookupId}`);
         }
+      } else {
+        logger.warn(`[VerificationService] No partner associated with verification: ${lookupId}`);
       }
     } catch (emailError) {
       // Log error but don't fail the verification
@@ -738,13 +789,114 @@ export class VerificationService {
   private checkDocumentExpiry(expiryDate?: string): boolean {
     if (!expiryDate) return false;
 
-    const expiry = new Date(expiryDate);
+    const expiry = this.parseDate(expiryDate);
+    if (!expiry) return false;
+
     const today = new Date();
     // Set time to start of day for accurate date comparison
     today.setHours(0, 0, 0, 0);
     expiry.setHours(0, 0, 0, 0);
 
     return expiry < today;
+  }
+
+  /**
+   * Parse date strings in various formats including:
+   * - ISO format: "1988-02-18"
+   * - Canadian bilingual: "18 FEB-FEV 1988", "01 MAY - MAI 96"
+   * - Standard: "February 18, 1988", "18 Feb 1988"
+   * Returns null if parsing fails
+   */
+  private parseDate(dateString?: string): Date | null {
+    if (!dateString) return null;
+
+    // Try standard Date parsing first
+    let date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+
+    // Support both 3-letter abbreviations and full month names
+    const months: Record<string, number> = {
+      'JAN': 0, 'JANUARY': 0, 'JANVIER': 0,
+      'FEB': 1, 'FEBRUARY': 1, 'FEVRIER': 1, 'FEV': 1,
+      'MAR': 2, 'MARCH': 2, 'MARS': 2,
+      'APR': 3, 'APRIL': 3, 'AVRIL': 3, 'AVR': 3,
+      'MAY': 4, 'MAI': 4,
+      'JUN': 5, 'JUNE': 5, 'JUIN': 5,
+      'JUL': 6, 'JULY': 6, 'JUILLET': 6, 'JUIL': 6,
+      'AUG': 7, 'AUGUST': 7, 'AOUT': 7, 'AOU': 7,
+      'SEP': 8, 'SEPTEMBER': 8, 'SEPTEMBRE': 8, 'SEPT': 8,
+      'OCT': 9, 'OCTOBER': 9, 'OCTOBRE': 9,
+      'NOV': 10, 'NOVEMBER': 10, 'NOVEMBRE': 10,
+      'DEC': 11, 'DECEMBER': 11, 'DECEMBRE': 11
+    };
+
+    // Helper to convert 2-digit year to 4-digit year
+    const toFullYear = (year: number): number => {
+      if (year >= 100) return year; // Already 4 digits
+      // Assume years 00-30 are 2000s, 31-99 are 1900s
+      return year <= 30 ? 2000 + year : 1900 + year;
+    };
+
+    // Handle Canadian bilingual format: "18 FEB-FEV 1988", "01 MAY - MAI 96", "24 JULY-JUIL 28"
+    // Allows optional spaces around hyphen, variable length month names, and 2 or 4 digit years
+    const bilingualMatch = dateString.match(/(\d{1,2})\s+([A-Z]{3,9})\s*-\s*[A-Z]{3,9}\s+(\d{2,4})/i);
+    if (bilingualMatch) {
+      const day = parseInt(bilingualMatch[1], 10);
+      const monthStr = bilingualMatch[2].toUpperCase();
+      const year = toFullYear(parseInt(bilingualMatch[3], 10));
+
+      const month = months[monthStr];
+      if (month !== undefined) {
+        return new Date(year, month, day);
+      }
+    }
+
+    // Handle format: "18 FEB 1988", "18 FEB 88", "FEB 18 1988", "FEB 18 88", "18 JULY 2028"
+    const simpleMatch = dateString.match(/(\d{1,2})\s+([A-Z]{3,9})\s+(\d{2,4})/i) ||
+                        dateString.match(/([A-Z]{3,9})\s+(\d{1,2})\s+(\d{2,4})/i);
+    if (simpleMatch) {
+      // Determine if day or month came first
+      if (/^\d/.test(simpleMatch[1])) {
+        // Day first: "18 FEB 1988" or "18 FEB 88"
+        const day = parseInt(simpleMatch[1], 10);
+        const month = months[simpleMatch[2].toUpperCase()];
+        const year = toFullYear(parseInt(simpleMatch[3], 10));
+        if (month !== undefined) {
+          return new Date(year, month, day);
+        }
+      } else {
+        // Month first: "FEB 18 1988" or "FEB 18 88"
+        const month = months[simpleMatch[1].toUpperCase()];
+        const day = parseInt(simpleMatch[2], 10);
+        const year = toFullYear(parseInt(simpleMatch[3], 10));
+        if (month !== undefined) {
+          return new Date(year, month, day);
+        }
+      }
+    }
+
+    // Handle DD/MM/YYYY, DD/MM/YY, MM/DD/YYYY, or MM/DD/YY format
+    const slashMatch = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if (slashMatch) {
+      const first = parseInt(slashMatch[1], 10);
+      const second = parseInt(slashMatch[2], 10);
+      const year = toFullYear(parseInt(slashMatch[3], 10));
+
+      // Assume DD/MM/YYYY for values where first > 12
+      if (first > 12) {
+        return new Date(year, second - 1, first);
+      } else if (second > 12) {
+        return new Date(year, first - 1, second);
+      } else {
+        // Ambiguous - assume DD/MM/YYYY (more common internationally)
+        return new Date(year, second - 1, first);
+      }
+    }
+
+    console.log('[VerificationService] Could not parse date:', dateString);
+    return null;
   }
 
   /**
@@ -842,12 +994,36 @@ export class VerificationService {
   }
 
   private detectTampering(documents: any[]): boolean {
+    // Tampering detection should only flag obvious manipulation
+    // Low quality or OCR confidence alone doesn't indicate tampering
+    // (could be lighting, camera quality, document wear, etc.)
+
     for (const doc of documents) {
-      if (doc.qualityScore && doc.qualityScore < 0.3) {
+      // Skip selfie documents - they don't need tampering checks
+      if (doc.type === 'SELFIE') continue;
+
+      const qualityScore = doc.qualityScore || 1;
+      const confidence = doc.extractedData?.confidence || 1;
+
+      console.log('[VerificationService] Tampering check for document:', {
+        type: doc.type,
+        qualityScore,
+        confidence,
+        isBlurry: doc.isBlurry,
+        hasGlare: doc.hasGlare
+      });
+
+      // Only flag as tampered if quality is EXTREMELY low (< 0.15)
+      // This indicates potential digital manipulation or fake document
+      if (qualityScore < 0.15) {
+        console.log('[VerificationService] Document flagged for very low quality:', qualityScore);
         return true;
       }
 
-      if (doc.extractedData?.confidence && doc.extractedData.confidence < 0.5) {
+      // Only flag if OCR confidence is EXTREMELY low (< 0.2)
+      // This could indicate text has been digitally altered
+      if (confidence < 0.2) {
+        console.log('[VerificationService] Document flagged for very low OCR confidence:', confidence);
         return true;
       }
     }
@@ -979,7 +1155,7 @@ export class VerificationService {
       where: { parentVerificationId: rootId }
     });
 
-    return count;
+    return count+1;
   }
 
   /**

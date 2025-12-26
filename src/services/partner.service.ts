@@ -643,13 +643,19 @@ export class PartnerService {
 
       logger.info(`[PartnerService] Partner found: ${partner.companyName} (${partnerId})`);
 
-      // Check if user exists, create if not
+      // Check if user exists with same email AND name, create if not
+      // Users are uniquely identified by email + fullName combination
       let user = await prisma.user.findUnique({
-        where: { email: data.userEmail }
+        where: {
+          email_fullName: {
+            email: data.userEmail,
+            fullName: data.userName || ''
+          }
+        }
       });
 
       if (!user) {
-        logger.info(`[PartnerService] Creating new user: ${data.userEmail}`);
+        logger.info(`[PartnerService] Creating new user: ${data.userEmail} (${data.userName})`);
 
         user = await prisma.user.create({
           data: {
@@ -661,15 +667,16 @@ export class PartnerService {
 
         logger.info(`[PartnerService] User created with ID: ${user.id}`);
       } else {
-        // Update user info if changed
-        logger.info(`[PartnerService] User already exists: ${user.id}, updating info`);
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            fullName: data.userName,
-            phone: data.userPhone
-          }
-        });
+        // Update phone if changed (email and name are already matched)
+        logger.info(`[PartnerService] User already exists: ${user.id}, updating phone if needed`);
+        if (data.userPhone && data.userPhone !== user.phone) {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              phone: data.userPhone
+            }
+          });
+        }
       }
 
       // Create verification request

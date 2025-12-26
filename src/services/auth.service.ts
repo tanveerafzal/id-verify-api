@@ -18,11 +18,17 @@ export interface CreateUserData {
 export class AuthService {
   /**
    * Create a new user (for verification purposes)
+   * Users are uniquely identified by email + fullName combination
    */
   async createUser(data: CreateUserData) {
-    // Check if email already exists
+    // Check if user with same email AND name already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: data.email }
+      where: {
+        email_fullName: {
+          email: data.email,
+          fullName: data.fullName || ''
+        }
+      }
     });
 
     if (existingUser) {
@@ -42,11 +48,17 @@ export class AuthService {
   }
 
   /**
-   * Find or create user by email
+   * Find or create user by email AND name
+   * Users are uniquely identified by email + fullName combination
    */
   async findOrCreateUser(email: string, fullName?: string, phone?: string) {
     let user = await prisma.user.findUnique({
-      where: { email }
+      where: {
+        email_fullName: {
+          email: email,
+          fullName: fullName || ''
+        }
+      }
     });
 
     if (!user) {
@@ -99,9 +111,34 @@ export class AuthService {
     });
   }
 
+  /**
+   * Find users by email (may return multiple if same email with different names)
+   * Use findFirst to get any user with this email
+   */
   async getUserByEmail(email: string) {
-    return await prisma.user.findUnique({
+    return await prisma.user.findFirst({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        createdAt: true
+      }
+    });
+  }
+
+  /**
+   * Find user by email AND fullName (exact match)
+   */
+  async getUserByEmailAndName(email: string, fullName: string) {
+    return await prisma.user.findUnique({
+      where: {
+        email_fullName: {
+          email: email,
+          fullName: fullName || ''
+        }
+      },
       select: {
         id: true,
         email: true,

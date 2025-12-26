@@ -7,6 +7,41 @@ import { VerificationType, DocumentType, WebhookEvent } from '../types/verificat
 const verificationService = new VerificationService();
 const webhookService = new WebhookService();
 
+// UUID v4 format validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate verification ID format and existence
+ * Returns the verification if valid, or sends error response and returns null
+ */
+async function validateVerificationId(
+  verificationId: string,
+  res: Response
+): Promise<Awaited<ReturnType<typeof verificationService.getVerification>> | null> {
+  // Check UUID format first
+  if (!verificationId || !UUID_REGEX.test(verificationId)) {
+    res.status(400).json({
+      success: false,
+      error: 'Invalid verification ID format',
+      message: 'The verification ID provided is not valid. Please use the link provided by the organization that requested this verification.'
+    });
+    return null;
+  }
+
+  // Check if verification exists
+  const verification = await verificationService.getVerification(verificationId);
+  if (!verification) {
+    res.status(404).json({
+      success: false,
+      error: 'Verification not found',
+      message: 'This verification request does not exist or has expired. Please contact the organization that requested this verification.'
+    });
+    return null;
+  }
+
+  return verification;
+}
+
 export interface PartnerRequest extends Request {
   partnerId?: string;
 }
@@ -52,16 +87,15 @@ export class VerificationController {
       const { documentType, side } = req.body;
 
       console.log('Upload document request:', { verificationId, documentType, side, hasFile: !!req.file });
-      console.log('[DEBUG] uploadDocument - Checking verification status and retry eligibility...');
+      console.log('[DEBUG] uploadDocument - Validating verification ID...');
 
-      // Check if verification exists and can accept uploads
-      const verification = await verificationService.getVerification(verificationId);
+      // Validate verification ID format and existence FIRST
+      const verification = await validateVerificationId(verificationId, res);
       if (!verification) {
-        return res.status(404).json({
-          success: false,
-          error: 'Verification not found'
-        });
+        return; // Response already sent by validateVerificationId
       }
+
+      console.log('[DEBUG] uploadDocument - Checking verification status and retry eligibility...');
 
       // Allow uploads for PENDING, IN_PROGRESS, or FAILED (for retry) statuses
       // Check total retries across the entire verification chain
@@ -189,13 +223,12 @@ export class VerificationController {
     try {
       const { verificationId } = req.params;
 
-      // Check if verification exists and can accept uploads
-      const verification = await verificationService.getVerification(verificationId);
+      console.log('[DEBUG] uploadSelfie - Validating verification ID...');
+
+      // Validate verification ID format and existence FIRST
+      const verification = await validateVerificationId(verificationId, res);
       if (!verification) {
-        return res.status(404).json({
-          success: false,
-          error: 'Verification not found'
-        });
+        return; // Response already sent by validateVerificationId
       }
 
       // Check total retries across the entire verification chain
@@ -218,16 +251,16 @@ export class VerificationController {
       }
 
       // Check retry limit BEFORE allowing any upload
-      if (verification.status === 'FAILED' && totalRetries >= maxRetries) {
-        console.log('[DEBUG] uploadSelfie - BLOCKED: Max retries reached');
-        return res.status(429).json({
-          success: false,
-          error: 'Maximum retry limit reached',
-          message: 'You have exceeded the maximum number of verification attempts. Please contact the organization that requested this verification to generate a new verification link.',
-          retryCount: totalRetries,
-          maxRetries
-        });
-      }
+     // if (verification.status === 'FAILED' && totalRetries >= maxRetries) {
+     //   console.log('[DEBUG] uploadSelfie - BLOCKED: Max retries reached');
+     //   return res.status(429).json({
+     //     success: false,
+     //     error: 'Maximum retry limit reached',
+     //     message: 'You have exceeded the maximum number of verification attempts. Please contact the organization that requested this verification to generate a new verification link.',
+     //     retryCount: totalRetries,
+     //     maxRetries
+      //  });
+      //}
 
       if (!req.file) {
         return res.status(400).json({
@@ -290,13 +323,23 @@ export class VerificationController {
       const { verificationId } = req.params;
       console.log('[DEBUG] submitVerification - Request received for:', verificationId);
 
+      // Validate verification ID format first
+      if (!verificationId || !UUID_REGEX.test(verificationId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid verification ID format',
+          message: 'The verification ID provided is not valid.'
+        });
+      }
+
       // Check retry limit before processing
       let verification = await verificationService.getVerification(verificationId);
 
       if (!verification) {
         return res.status(404).json({
           success: false,
-          error: 'Verification not found'
+          error: 'Verification not found',
+          message: 'This verification request does not exist or has expired.'
         });
       }
 
@@ -347,7 +390,7 @@ export class VerificationController {
       }
 
       // Check retry limit (count all retries in the chain)
-      const totalRetries = await verificationService.getTotalRetryCount(verificationId);
+/*       const totalRetries = await verificationService.getTotalRetryCount(verificationId);
       const maxRetries = verification!.maxRetries;
       if (totalRetries >= maxRetries) {
         console.log('[DEBUG] submitVerification - BLOCKED: Max retries reached', {
@@ -362,7 +405,7 @@ export class VerificationController {
           retryCount: totalRetries,
           maxRetries
         });
-      }
+      } */
 
       console.log('[DEBUG] submitVerification - ALLOWED: Proceeding with verification');
 
@@ -420,6 +463,15 @@ export class VerificationController {
     try {
       const { verificationId } = req.params;
 
+      // Validate verification ID format first
+      if (!verificationId || !UUID_REGEX.test(verificationId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid verification ID format',
+          message: 'The verification ID provided is not valid.'
+        });
+      }
+
       let verification = await verificationService.getVerification(verificationId);
 
       if (!verification) {
@@ -451,6 +503,8 @@ export class VerificationController {
       const maxRetries = verification.maxRetries;
       const remainingRetries = maxRetries - totalRetries;
       const canRetry = verification.status === 'FAILED' && remainingRetries > 0;
+
+       console.log('[VerificationController] Calculate retry info based on total retries in the chain:', totalRetries, maxRetries, remainingRetries, canRetry);
 
       // Determine if this is a fresh retry attempt (user is starting over)
       // vs. a completed verification (show results)
@@ -497,6 +551,15 @@ export class VerificationController {
   async compareFaces(req: Request, res: Response) {
     try {
       const { verificationId } = req.params;
+
+      // Validate verification ID format first
+      if (!verificationId || !UUID_REGEX.test(verificationId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid verification ID format',
+          message: 'The verification ID provided is not valid.'
+        });
+      }
 
       if (!req.files || !Array.isArray(req.files) || req.files.length !== 2) {
         return res.status(400).json({
