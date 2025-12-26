@@ -558,65 +558,70 @@ export class VerificationService {
     console.log('  - faceMatchScore:', faceMatchScore);
     console.log('  - passed:', passed);
 
-    // Use upsert to handle both new and retry scenarios
-    await prisma.verificationResult.upsert({
-      where: { verificationId },
-      update: {
-        passed,
-        score: result.score,
-        riskLevel,
-        nameMatch,
-        documentAuthentic: result.checks.documentAuthentic,
-        documentExpired: result.checks.documentExpired,
-        documentTampered: result.checks.documentTampered,
-        faceMatch,
-        faceMatchScore,
-        extractedName: extractedData.fullName || null,
-        extractedDob: extractedData.dateOfBirth ? new Date(extractedData.dateOfBirth) : null,
-        extractedAddress: addressString,
-        documentNumber: extractedData.documentNumber || null,
-        issuingCountry: extractedData.issuingCountry || null,
-        expiryDate: extractedData.expiryDate ? new Date(extractedData.expiryDate) : null,
-        extractedData: extractedData as any,
-        flags,
-        warnings,
-        updatedAt: new Date()
-      },
-      create: {
-        verificationId,
-        passed,
-        score: result.score,
-        riskLevel,
-        nameMatch,
-        documentAuthentic: result.checks.documentAuthentic,
-        documentExpired: result.checks.documentExpired,
-        documentTampered: result.checks.documentTampered,
-        faceMatch,
-        faceMatchScore,
-        extractedName: extractedData.fullName || null,
-        extractedDob: extractedData.dateOfBirth ? new Date(extractedData.dateOfBirth) : null,
-        extractedAddress: addressString,
-        documentNumber: extractedData.documentNumber || null,
-        issuingCountry: extractedData.issuingCountry || null,
-        expiryDate: extractedData.expiryDate ? new Date(extractedData.expiryDate) : null,
-        extractedData: extractedData as any,
-        flags,
-        warnings
-      }
-    });
-
-    await prisma.verification.update({
-      where: { id: verificationId },
-      data: {
-        status: passed ? VerificationStatus.COMPLETED : VerificationStatus.FAILED,
-        completedAt: passed ? new Date() : undefined,
-        // Increment retry count if verification failed
-        retryCount: passed ? undefined : {
-          increment: 1
+    console.log('Use upsert to handle both new and retry scenarios');
+    try {
+      await prisma.verificationResult.upsert({
+        where: { verificationId },
+        update: {
+          passed,
+          score: result.score,
+          riskLevel,
+          nameMatch,
+          documentAuthentic: result.checks.documentAuthentic,
+          documentExpired: result.checks.documentExpired,
+          documentTampered: result.checks.documentTampered,
+          faceMatch,
+          faceMatchScore,
+          extractedName: extractedData.fullName || null,
+          extractedDob: extractedData.dateOfBirth ? new Date(extractedData.dateOfBirth) : null,
+          extractedAddress: addressString,
+          documentNumber: extractedData.documentNumber || null,
+          issuingCountry: extractedData.issuingCountry || null,
+          expiryDate: extractedData.expiryDate ? new Date(extractedData.expiryDate) : null,
+          extractedData: extractedData as any,
+          flags,
+          warnings,
+          updatedAt: new Date()
+        },
+        create: {
+          verificationId,
+          passed,
+          score: result.score,
+          riskLevel,
+          nameMatch,
+          documentAuthentic: result.checks.documentAuthentic,
+          documentExpired: result.checks.documentExpired,
+          documentTampered: result.checks.documentTampered,
+          faceMatch,
+          faceMatchScore,
+          extractedName: extractedData.fullName || null,
+          extractedDob: extractedData.dateOfBirth ? new Date(extractedData.dateOfBirth) : null,
+          extractedAddress: addressString,
+          documentNumber: extractedData.documentNumber || null,
+          issuingCountry: extractedData.issuingCountry || null,
+          expiryDate: extractedData.expiryDate ? new Date(extractedData.expiryDate) : null,
+          extractedData: extractedData as any,
+          flags,
+          warnings
         }
-      }
-    });
-
+      });
+      console.log('verification.update');
+      await prisma.verification.update({
+        where: { id: verificationId },
+        data: {
+          status: passed ? VerificationStatus.COMPLETED : VerificationStatus.FAILED,
+          completedAt: passed ? new Date() : undefined,
+          // Increment retry count if verification failed
+          retryCount: passed ? undefined : {
+            increment: 1
+          }
+        }
+      });
+    } catch (emailError) {
+      // Log error but don't fail the verification
+      logger.error('[VerificationService] Failed to update verificationResult:', emailError);
+    }
+  console.log('Send email notification to partner');
     // Send email notification to partner
     try {
       const verificationWithDetails = await prisma.verification.findUnique({
