@@ -158,6 +158,7 @@ model Document {
   originalUrl    String
   processedUrl   String?
   thumbnailUrl   String?
+  mimeType       String?       // e.g., "image/jpeg", "image/png", "application/pdf"
   extractedData  Json?
   qualityScore   Float?
   isBlurry       Boolean       @default(false)

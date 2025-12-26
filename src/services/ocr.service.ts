@@ -338,12 +338,35 @@ export class OCRService {
     console.log('[OCRService] Calling external Document OCR API');
 
     try {
-      // Create form data with the image
+      // Detect file type from buffer
+      const isPdf = imageBuffer[0] === 0x25 && imageBuffer[1] === 0x50 &&
+                    imageBuffer[2] === 0x44 && imageBuffer[3] === 0x46; // %PDF
+      const isPng = imageBuffer[0] === 0x89 && imageBuffer[1] === 0x50 &&
+                    imageBuffer[2] === 0x4E && imageBuffer[3] === 0x47; // PNG signature
+
+      let filename: string;
+      let contentType: string;
+
+      if (isPdf) {
+        filename = 'document.pdf';
+        contentType = 'application/pdf';
+        console.log('[OCRService] Detected PDF file');
+      } else if (isPng) {
+        filename = 'document.png';
+        contentType = 'image/png';
+        console.log('[OCRService] Detected PNG file');
+      } else {
+        filename = 'document.jpg';
+        contentType = 'image/jpeg';
+        console.log('[OCRService] Assuming JPEG file');
+      }
+
+      // Create form data with the document
       const FormData = (await import('form-data')).default;
       const formData = new FormData();
       formData.append('file', imageBuffer, {
-        filename: 'document.jpg',
-        contentType: 'image/jpeg'
+        filename,
+        contentType
       });
 
       const response = await axios.post<ExternalOcrResponse>(apiUrl, formData, {

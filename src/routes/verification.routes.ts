@@ -45,7 +45,7 @@ const upload = multer({
     if (config.verification.supportedImageFormats.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Unsupported file format. Use JPEG or PNG.'));
+      cb(new Error('Unsupported file format. Supported formats: JPEG, PNG, PDF.'));
     }
   }
 });

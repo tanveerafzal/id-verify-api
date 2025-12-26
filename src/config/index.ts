@@ -76,7 +76,7 @@ export const config = {
 
   verification: {
     documentMaxSizeMB: 10,
-    supportedImageFormats: ['image/jpeg', 'image/png', 'image/jpg'],
+    supportedImageFormats: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
     minQualityScore: 0.3,
     maxVerificationAgeDays: 30,
     faceMatchThreshold: 0.85,

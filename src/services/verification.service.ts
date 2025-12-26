@@ -117,13 +117,33 @@ export class VerificationService {
       activeVerificationId = newVerification.id;
     }
 
+    // Detect if file is PDF (PDFs start with %PDF)
+    const isPdf = imageBuffer[0] === 0x25 && imageBuffer[1] === 0x50 &&
+                  imageBuffer[2] === 0x44 && imageBuffer[3] === 0x46;
 
-    const preprocessed = await this.documentScanner.preprocessImage(imageBuffer);
+    let preprocessed: Buffer;
+    let qualityCheck: { qualityScore: number; isBlurry: boolean; hasGlare: boolean; isComplete: boolean; issues: string[] };
 
-    const qualityCheck = await this.documentScanner.checkQuality(preprocessed);
+    if (isPdf) {
+      // PDFs can't be preprocessed with sharp - send directly to OCR
+      console.log('[VerificationService] PDF detected - skipping image preprocessing');
+      preprocessed = imageBuffer;
+      // Default quality check for PDFs (assume good quality since we can't analyze)
+      qualityCheck = {
+        qualityScore: 0.85,
+        isBlurry: false,
+        hasGlare: false,
+        isComplete: true,
+        issues: []
+      };
+    } else {
+      // Image files - preprocess normally
+      preprocessed = await this.documentScanner.preprocessImage(imageBuffer);
+      qualityCheck = await this.documentScanner.checkQuality(preprocessed);
 
-    if (qualityCheck.qualityScore < config.verification.minQualityScore) {
-      throw new Error(`Document quality too low: ${qualityCheck.issues.join(', ')}`);
+      if (qualityCheck.qualityScore < config.verification.minQualityScore) {
+        throw new Error(`Document quality too low: ${qualityCheck.issues.join(', ')}`);
+      }
     }
 
     // Use user-provided document type or default to DRIVERS_LICENSE
@@ -187,12 +207,23 @@ export class VerificationService {
     //   throw new Error(`Invalid ${typeName} number format: ${idValidation.errors.join('. ')}. Please ensure you uploaded a valid ${typeName}.`);
     // }
 
-    // Generate thumbnail for future use
-    await this.documentScanner.generateThumbnail(preprocessed);
+    // Generate thumbnail for future use (skip for PDFs)
+    if (!isPdf) {
+      await this.documentScanner.generateThumbnail(preprocessed);
+    }
 
     const enrichedExtractedData = {
       ...extractedData
     };
+
+    // Determine mimeType from buffer content
+    let mimeType = 'image/jpeg'; // default
+    if (isPdf) {
+      mimeType = 'application/pdf';
+    } else if (imageBuffer[0] === 0x89 && imageBuffer[1] === 0x50 &&
+               imageBuffer[2] === 0x4E && imageBuffer[3] === 0x47) {
+      mimeType = 'image/png';
+    }
 
     const document = await prisma.document.create({
       data: {
@@ -200,6 +231,7 @@ export class VerificationService {
         type: finalDocumentType,
         side,
         originalUrl: documentUrl || 'not-saved',
+        mimeType,
         extractedData: enrichedExtractedData as any,
         qualityScore: qualityCheck.qualityScore,
         isBlurry: qualityCheck.isBlurry,
@@ -277,11 +309,19 @@ export class VerificationService {
     if (selfieUrl) {
       console.log('[VerificationService] Saving selfie to verification:', activeVerificationId);
 
+      // Determine mimeType from buffer content
+      let selfieMimeType = 'image/jpeg'; // default for selfies
+      if (imageBuffer[0] === 0x89 && imageBuffer[1] === 0x50 &&
+          imageBuffer[2] === 0x4E && imageBuffer[3] === 0x47) {
+        selfieMimeType = 'image/png';
+      }
+
       await prisma.document.create({
         data: {
           verificationId: activeVerificationId,
           type: 'SELFIE',
           originalUrl: selfieUrl,
+          mimeType: selfieMimeType,
           qualityScore: biometricData.faceQuality || null,
           isBlurry: false,
           isComplete: true
