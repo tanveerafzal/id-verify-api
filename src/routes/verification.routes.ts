@@ -82,4 +82,10 @@ router.post(
   controller.submitVerification.bind(controller)
 );
 
+// Decrypt verification request - no API key needed as this is called from public verify page
+router.get(
+  '/verifications/decrypt',
+  controller.decryptVerificationRequest.bind(controller)
+);
+
 export default router;

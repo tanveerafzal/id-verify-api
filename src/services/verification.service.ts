@@ -225,6 +225,39 @@ export class VerificationService {
       mimeType = 'image/png';
     }
 
+    // Delete existing documents of the same type (not SELFIE) for this verification
+    // This ensures only one ID document is kept per verification
+    const existingDocs = await prisma.document.findMany({
+      where: {
+        verificationId: activeVerificationId,
+        type: { not: 'SELFIE' }
+      }
+    });
+
+    if (existingDocs.length > 0) {
+      console.log(`[VerificationService] Deleting ${existingDocs.length} existing document(s) for verification ${activeVerificationId}`);
+
+      // Delete files from S3
+      for (const doc of existingDocs) {
+        if (doc.originalUrl && doc.originalUrl !== 'not-saved') {
+          try {
+            await s3Service.deleteFile(doc.originalUrl);
+            console.log(`[VerificationService] Deleted S3 file: ${doc.originalUrl}`);
+          } catch (err) {
+            console.error(`[VerificationService] Failed to delete S3 file: ${doc.originalUrl}`, err);
+          }
+        }
+      }
+
+      // Delete document records from database
+      await prisma.document.deleteMany({
+        where: {
+          verificationId: activeVerificationId,
+          type: { not: 'SELFIE' }
+        }
+      });
+    }
+
     const document = await prisma.document.create({
       data: {
         verificationId: activeVerificationId,
@@ -305,9 +338,41 @@ export class VerificationService {
     };
 
     // Save selfie as a document in the Document table
-    // Always create new selfie document to keep history of all attempts
+    // Delete existing selfie first to ensure only one per verification
     if (selfieUrl) {
       console.log('[VerificationService] Saving selfie to verification:', activeVerificationId);
+
+      // Delete existing selfie for this verification
+      const existingSelfies = await prisma.document.findMany({
+        where: {
+          verificationId: activeVerificationId,
+          type: 'SELFIE'
+        }
+      });
+
+      if (existingSelfies.length > 0) {
+        console.log(`[VerificationService] Deleting ${existingSelfies.length} existing selfie(s) for verification ${activeVerificationId}`);
+
+        // Delete files from S3
+        for (const selfie of existingSelfies) {
+          if (selfie.originalUrl) {
+            try {
+              await s3Service.deleteFile(selfie.originalUrl);
+              console.log(`[VerificationService] Deleted S3 selfie: ${selfie.originalUrl}`);
+            } catch (err) {
+              console.error(`[VerificationService] Failed to delete S3 selfie: ${selfie.originalUrl}`, err);
+            }
+          }
+        }
+
+        // Delete selfie records from database
+        await prisma.document.deleteMany({
+          where: {
+            verificationId: activeVerificationId,
+            type: 'SELFIE'
+          }
+        });
+      }
 
       // Determine mimeType from buffer content
       let selfieMimeType = 'image/jpeg'; // default for selfies
@@ -621,7 +686,7 @@ export class VerificationService {
     // Update the result object with the formatted extractedData
     result.extractedData = extractedData;
 
-    console.log('Use upsert to handle both new and retry scenarios');
+    console.log('Use upsert to handle both new and retry scenarios verificationId:', verificationId);
 
     try {
       await prisma.verificationResult.upsert({
@@ -669,7 +734,7 @@ export class VerificationService {
           warnings
         }
       });
-      console.log('verification.update');
+      console.log('verification.update verificationId:', verificationId);
       const newStatus = passed ? VerificationStatus.COMPLETED : VerificationStatus.FAILED;
       const completedAt = new Date();
 

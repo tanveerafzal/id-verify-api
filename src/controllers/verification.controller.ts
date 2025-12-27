@@ -1,8 +1,12 @@
 import { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
 import { VerificationService } from '../services/verification.service';
 import { WebhookService } from '../services/webhook.service';
 import { s3Service } from '../services/s3.service';
 import { VerificationType, DocumentType, WebhookEvent } from '../types/verification.types';
+import { decryptVerificationRequest } from '../utils/crypto';
+
+const prisma = new PrismaClient();
 
 const verificationService = new VerificationService();
 const webhookService = new WebhookService();
@@ -87,7 +91,7 @@ export class VerificationController {
       const { documentType, side } = req.body;
 
       console.log('Upload document request:', { verificationId, documentType, side, hasFile: !!req.file });
-      console.log('[DEBUG] uploadDocument - Validating verification ID...');
+      console.log('[DEBUG] uploadDocument - Validating verification ID...',verificationId);
 
       // Validate verification ID format and existence FIRST
       const verification = await validateVerificationId(verificationId, res);
@@ -117,12 +121,15 @@ export class VerificationController {
         });
       }
 
-      // Check retry limit BEFORE allowing any upload
-      if (verification.status === 'FAILED' && totalRetries >= maxRetries) {
-        console.log('[DEBUG] uploadDocument - BLOCKED: Max retries reached', {
+      // Only block if verification is FAILED and this is NOT the current/last attempt
+      // Users should be able to re-upload documents for their current attempt even if it previously failed
+      // The retry count only matters when creating a NEW retry verification, not when re-uploading to current one
+      // We block only if they've exceeded max retries (totalRetries > maxRetries means a new retry was already blocked)
+      if (verification.status === 'FAILED' && totalRetries > maxRetries) {
+        console.log('[DEBUG] uploadDocument - BLOCKED: Exceeded max retries', {
           totalRetries,
           maxRetries,
-          condition: `${totalRetries} >= ${maxRetries} = ${totalRetries >= maxRetries}`
+          condition: `${totalRetries} > ${maxRetries} = ${totalRetries > maxRetries}`
         });
         return res.status(429).json({
           success: false,
@@ -130,6 +137,15 @@ export class VerificationController {
           message: 'You have exceeded the maximum number of verification attempts. Please contact the organization that requested this verification to generate a new verification link.',
           retryCount: totalRetries,
           maxRetries
+        });
+      }
+
+      // If verification failed but is at max retries, reset to IN_PROGRESS to allow re-upload
+      if (verification.status === 'FAILED' && totalRetries === maxRetries) {
+        console.log('[DEBUG] uploadDocument - Last attempt failed, allowing re-upload and resetting to IN_PROGRESS');
+        await prisma.verification.update({
+          where: { id: verificationId },
+          data: { status: 'IN_PROGRESS' }
         });
       }
 
@@ -342,6 +358,15 @@ export class VerificationController {
           message: 'This verification request does not exist or has expired.'
         });
       }
+
+       console.log('[DEBUG] submitVerification 01 - Verification found:', {
+        id: verification!.id,
+        status: verification!.status,
+        retryCount: verification!.retryCount,
+        maxRetries: verification!.maxRetries,
+        documentsCount: verification!.documents?.length 
+      });
+
 
       // If this verification is FAILED, find the latest retry verification to use instead
       let activeVerificationId = verificationId;
@@ -584,6 +609,58 @@ export class VerificationController {
       return res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
+   * Decrypt verification request parameter to get the actual verification ID
+   * This is used by the frontend to resolve the encrypted verification-request param
+   */
+  async decryptVerificationRequest(req: Request, res: Response) {
+    try {
+      console.log('[VerificationController] Decrypting verification request...');
+      const { encryptedRequest } = req.query;
+      console.log('[VerificationController] Decrypting verification request...');
+      if (!encryptedRequest || typeof encryptedRequest !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing verification-request parameter'
+        });
+      }
+
+      console.log('[VerificationController] Decrypting verification request...');
+
+      const verificationId = decryptVerificationRequest(encryptedRequest);
+
+      // Validate the decrypted ID is a valid UUID
+      if (!UUID_REGEX.test(verificationId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid verification request'
+        });
+      }
+
+      // Verify the verification exists
+      const verification = await verificationService.getVerification(verificationId);
+      if (!verification) {
+        return res.status(404).json({
+          success: false,
+          error: 'Verification not found or expired'
+        });
+      }
+
+      console.log('[VerificationController] Verification request decrypted successfully:', verificationId);
+
+      return res.status(200).json({
+        success: true,
+        verificationId
+      });
+    } catch (error) {
+      console.error('[VerificationController] Decryption error:', error);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid or expired verification request'
       });
     }
   }

@@ -6,6 +6,7 @@ import { config } from '../config';
 import { EmailService } from './email.service';
 import { s3Service } from './s3.service';
 import { logger } from '../utils/logger';
+import { generateVerificationLink } from '../utils/crypto';
 
 const prisma = new PrismaClient();
 const emailService = new EmailService();
@@ -706,8 +707,8 @@ export class PartnerService {
         }
       });
 
-      // Generate verification link
-      const verificationLink = `${config.server.frontendUrl}/verify?verificationId=${verification.id}`;
+      // Generate verification link with encrypted ID
+      const verificationLink = generateVerificationLink(verification.id, config.server.frontendUrl);
 
       // Send email to user
       try {
@@ -756,8 +757,8 @@ export class PartnerService {
         throw new Error('Verification missing user information');
       }
 
-      // Generate verification link
-      const verificationLink = `${config.server.frontendUrl}/verify?verificationId=${verification.id}`;
+      // Generate verification link with encrypted ID
+      const verificationLink = generateVerificationLink(verification.id, config.server.frontendUrl);
 
       // Send email
       await emailService.sendVerificationEmail(

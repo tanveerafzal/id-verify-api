@@ -5,6 +5,7 @@ import { config } from '../config';
 import { logger } from '../utils/logger';
 import { s3Service } from './s3.service';
 import { EmailService } from './email.service';
+import { generateVerificationLink } from '../utils/crypto';
 
 const emailService = new EmailService();
 
@@ -844,8 +845,8 @@ export class AdminService {
         throw new Error('Verification missing user information');
       }
 
-      // Generate verification link
-      const verificationLink = `${config.server.frontendUrl}/verify?verificationId=${verification.id}`;
+      // Generate verification link with encrypted ID
+      const verificationLink = generateVerificationLink(verification.id, config.server.frontendUrl);
 
       // Send email
       await emailService.sendVerificationEmail(
