@@ -844,6 +844,7 @@ export class VerificationService {
    * Parse date strings in various formats including:
    * - ISO format: "1988-02-18"
    * - Canadian bilingual: "18 FEB-FEV 1988", "01 MAY - MAI 96"
+   * - Korean bilingual: "13 1월-JAN 2002", "06 11월-NOV 2023"
    * - Standard: "February 18, 1988", "18 Feb 1988"
    * Returns null if parsing fails
    */
@@ -878,6 +879,19 @@ export class VerificationService {
       // Assume years 00-30 are 2000s, 31-99 are 1900s
       return year <= 30 ? 2000 + year : 1900 + year;
     };
+
+    // Handle Korean bilingual format: "13 1월-JAN 2002", "06 11월-NOV 2023"
+    // Korean months use number + 월 (e.g., 1월 = January, 12월 = December)
+    const koreanMatch = dateString.match(/(\d{1,2})\s+(\d{1,2})월\s*-\s*[A-Z]{3,9}\s+(\d{2,4})/i);
+    if (koreanMatch) {
+      const day = parseInt(koreanMatch[1], 10);
+      const month = parseInt(koreanMatch[2], 10) - 1; // Korean months are 1-based, JS is 0-based
+      const year = toFullYear(parseInt(koreanMatch[3], 10));
+
+      if (month >= 0 && month <= 11) {
+        return new Date(year, month, day);
+      }
+    }
 
     // Handle Canadian bilingual format: "18 FEB-FEV 1988", "01 MAY - MAI 96", "24 JULY-JUIL 28"
     // Allows optional spaces around hyphen, variable length month names, and 2 or 4 digit years
