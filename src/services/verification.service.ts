@@ -89,32 +89,50 @@ export class VerificationService {
     let activeVerificationId = verificationId;
 
     if (isRetry) {
-      console.log('[VerificationService] Retry detected - creating new verification record');
-
       // Find the root/original verification (in case of multiple retries)
       const originalVerificationId = verification.parentVerificationId || verificationId;
 
-      // Count existing retries to set retry number
-      const existingRetries = await prisma.verification.count({
-        where: { parentVerificationId: originalVerificationId }
-      });
-
-      // Create a new verification linked to the original
-      const newVerification = await prisma.verification.create({
-        data: {
-          userId: verification.userId,
-          partnerId: verification.partnerId,
-          type: verification.type,
-          status: VerificationStatus.PENDING,
-          webhookUrl: verification.webhookUrl,
-          metadata: verification.metadata as any,
+      // First, check if there's already an IN_PROGRESS or PENDING retry for this verification
+      // Also ensure it hasn't been completed (completedAt is null)
+      const existingActiveRetry = await prisma.verification.findFirst({
+        where: {
           parentVerificationId: originalVerificationId,
-          retryCount: existingRetries + 1
-        }
+          status: { in: ['PENDING', 'IN_PROGRESS'] },
+          completedAt: null
+        },
+        orderBy: { createdAt: 'desc' }
       });
 
-      console.log(`[VerificationService] Created new verification ${newVerification.id} (retry #${existingRetries + 1}) linked to original ${originalVerificationId}`);
-      activeVerificationId = newVerification.id;
+      if (existingActiveRetry) {
+        // Use the existing active retry instead of creating a new one
+        console.log(`[VerificationService] Found existing active retry ${existingActiveRetry.id} - reusing it`);
+        activeVerificationId = existingActiveRetry.id;
+      } else {
+        // No active retry exists, create a new one
+        console.log('[VerificationService] Retry detected - creating new verification record');
+
+        // Count existing retries to set retry number
+        const existingRetries = await prisma.verification.count({
+          where: { parentVerificationId: originalVerificationId }
+        });
+
+        // Create a new verification linked to the original
+        const newVerification = await prisma.verification.create({
+          data: {
+            userId: verification.userId,
+            partnerId: verification.partnerId,
+            type: verification.type,
+            status: VerificationStatus.PENDING,
+            webhookUrl: verification.webhookUrl,
+            metadata: verification.metadata as any,
+            parentVerificationId: originalVerificationId,
+            retryCount: existingRetries + 1
+          }
+        });
+
+        console.log(`[VerificationService] Created new verification ${newVerification.id} (retry #${existingRetries + 1}) linked to original ${originalVerificationId}`);
+        activeVerificationId = newVerification.id;
+      }
     }
 
     // Detect if file is PDF (PDFs start with %PDF)

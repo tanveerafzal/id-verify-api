@@ -50,6 +50,13 @@ const upload = multer({
   }
 });
 
+// Decrypt verification request - no API key needed as this is called from public verify page
+// IMPORTANT: This route must be defined BEFORE /verifications/:verificationId to avoid matching "decrypt" as a verificationId
+router.get(
+  '/verifications/decrypt',
+  controller.decryptVerificationRequest.bind(controller)
+);
+
 // API key middleware tracks partner usage
 router.post('/verifications', apiKeyMiddleware, controller.createVerification.bind(controller));
 
@@ -80,12 +87,6 @@ router.post(
   '/verifications/:verificationId/submit',
   apiKeyMiddleware,
   controller.submitVerification.bind(controller)
-);
-
-// Decrypt verification request - no API key needed as this is called from public verify page
-router.get(
-  '/verifications/decrypt',
-  controller.decryptVerificationRequest.bind(controller)
 );
 
 export default router;
